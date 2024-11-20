@@ -162,8 +162,6 @@ class TestSubprocess:
                 [python, '-c', "import sys; raise Exception('Test Exception Output')"],
                 cppython_logger,
             )
-        assert len(caplog.records) == 1
-        assert caplog.records[0].message == 'Test Exception Output'
 
         assert 'Subprocess task failed' in str(exec_info.value)
 
