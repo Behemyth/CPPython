@@ -3,11 +3,11 @@
 from dataclasses import dataclass
 from logging import Logger
 
-from cppython_core.exceptions import PluginError
-from cppython_core.plugin_schema.generator import Generator
-from cppython_core.plugin_schema.provider import Provider
-from cppython_core.plugin_schema.scm import SCM
-from cppython_core.schema import CoreData
+from cppython.core.plugin_schema.generator import Generator
+from cppython.core.plugin_schema.provider import Provider
+from cppython.core.plugin_schema.scm import SCM
+from cppython.core.schema import CoreData
+from cppython.utility.exception import PluginError
 
 
 @dataclass
@@ -23,6 +23,7 @@ class Data:
     """Contains and manages the project data"""
 
     def __init__(self, core_data: CoreData, plugins: Plugins, logger: Logger) -> None:
+        """Initializes the data"""
         self._core_data = core_data
         self._plugins = plugins
         self.logger = logger
@@ -38,7 +39,6 @@ class Data:
         Raises:
             PluginError: Plugin error
         """
-
         if (sync_data := self.plugins.provider.sync_data(self.plugins.generator)) is None:
             raise PluginError("The provider doesn't support the generator")
 
@@ -52,5 +52,5 @@ class Data:
 
         path.mkdir(parents=True, exist_ok=True)
 
-        self.logger.warning("Downloading the %s requirements to %s", self.plugins.provider.name(), path)
+        self.logger.warning('Downloading the %s requirements to %s', self.plugins.provider.name(), path)
         await self.plugins.provider.download_tooling(path)

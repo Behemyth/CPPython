@@ -1,0 +1,14 @@
+= Fixtures
+
+Fixtures can be accessed by installing the optional `pytest` module, `cppython.pytest`.
+
+== Dynamic Fixtures
+
+With the pytest feature of `pytest_generate_tests` we register multiple dynamic fixtures for collecting test data, both for plugins and for the test suite itself.
+
+
+=== `build_<directory>` Fixture
+
+* Discovered from `tests/build/<directory>`
+* The contents of the directory are copied to a temporary directory
+

@@ -4,11 +4,10 @@ import asyncio
 import logging
 from typing import Any
 
-from cppython_core.exceptions import ConfigException
-from cppython_core.resolution import resolve_model
-from cppython_core.schema import Interface, ProjectConfiguration, PyProject
-
 from cppython.builder import Builder
+from cppython.core.exception import ConfigException
+from cppython.core.resolution import resolve_model
+from cppython.core.schema import Interface, ProjectConfiguration, PyProject
 from cppython.schema import API
 
 
@@ -18,13 +17,14 @@ class Project(API):
     def __init__(
         self, project_configuration: ProjectConfiguration, interface: Interface, pyproject_data: dict[str, Any]
     ) -> None:
+        """Initializes the project"""
         self._enabled = False
         self._interface = interface
-        self.logger = logging.getLogger("cppython")
+        self.logger = logging.getLogger('cppython')
 
         builder = Builder(project_configuration, self.logger)
 
-        self.logger.info("Initializing project")
+        self.logger.info('Initializing project')
 
         try:
             pyproject = resolve_model(PyProject, pyproject_data)
@@ -40,7 +40,7 @@ class Project(API):
 
         self._enabled = True
 
-        self.logger.info("Initialized project successfully")
+        self.logger.info('Initialized project successfully')
 
     @property
     def enabled(self) -> bool:
@@ -58,19 +58,19 @@ class Project(API):
             Exception: Raised if failed
         """
         if not self._enabled:
-            self.logger.info("Skipping install because the project is not enabled")
+            self.logger.info('Skipping install because the project is not enabled')
             return
 
-        self.logger.info("Installing tools")
+        self.logger.info('Installing tools')
         asyncio.run(self._data.download_provider_tools())
 
-        self.logger.info("Installing project")
-        self.logger.info("Installing %s provider", self._data.plugins.provider.name())
+        self.logger.info('Installing project')
+        self.logger.info('Installing %s provider', self._data.plugins.provider.name())
 
         try:
             self._data.plugins.provider.install()
         except Exception as exception:
-            self.logger.error("Provider %s failed to install", self._data.plugins.provider.name())
+            self.logger.error('Provider %s failed to install', self._data.plugins.provider.name())
             raise exception
 
         self._data.sync()
@@ -82,19 +82,19 @@ class Project(API):
             Exception: Raised if failed
         """
         if not self._enabled:
-            self.logger.info("Skipping update because the project is not enabled")
+            self.logger.info('Skipping update because the project is not enabled')
             return
 
-        self.logger.info("Updating tools")
+        self.logger.info('Updating tools')
         asyncio.run(self._data.download_provider_tools())
 
-        self.logger.info("Updating project")
-        self.logger.info("Updating %s provider", self._data.plugins.provider.name())
+        self.logger.info('Updating project')
+        self.logger.info('Updating %s provider', self._data.plugins.provider.name())
 
         try:
             self._data.plugins.provider.update()
         except Exception as exception:
-            self.logger.error("Provider %s failed to update", self._data.plugins.provider.name())
+            self.logger.error('Provider %s failed to update', self._data.plugins.provider.name())
             raise exception
 
         self._data.sync()
