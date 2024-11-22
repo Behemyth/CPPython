@@ -1,5 +1,6 @@
 """Tests the Project type"""
 
+import logging
 import tomllib
 from importlib import metadata
 from pathlib import Path
@@ -45,11 +46,12 @@ class TestProject:
         assert not project.enabled
 
     @staticmethod
-    def test_missing_tool_table(tmp_path: Path) -> None:
+    def test_missing_tool_table(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         """The project type should be constructable without the tool table
 
         Args:
             tmp_path: Temporary directory for dummy data
+            caplog: Pytest fixture for capturing logs
         """
         file_path = tmp_path / 'pyproject.toml'
 
@@ -60,16 +62,22 @@ class TestProject:
         interface = MockInterface()
 
         pyproject = PyProject(project=pep621)
-        project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        with caplog.at_level(logging.WARNING):
+            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        # We don't want to have the log of the calling tool polluted with any default logging
+        assert len(caplog.records) == 0
 
         assert not project.enabled
 
     @staticmethod
-    def test_missing_cppython_table(tmp_path: Path) -> None:
+    def test_missing_cppython_table(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         """The project type should be constructable without the cppython table
 
         Args:
             tmp_path: Temporary directory for dummy data
+            caplog: Pytest fixture for capturing logs
         """
         file_path = tmp_path / 'pyproject.toml'
 
@@ -81,17 +89,23 @@ class TestProject:
 
         tool_data = ToolData()
         pyproject = PyProject(project=pep621, tool=tool_data)
-        project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        with caplog.at_level(logging.WARNING):
+            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        # We don't want to have the log of the calling tool polluted with any default logging
+        assert len(caplog.records) == 0
 
         assert not project.enabled
 
     @staticmethod
-    def test_default_cppython_table(tmp_path: Path, mocker: MockerFixture) -> None:
+    def test_default_cppython_table(tmp_path: Path, mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
         """The project type should be constructable with the default cppython table
 
         Args:
             tmp_path: Temporary directory for dummy data
             mocker: Pytest mocker fixture
+            caplog: Pytest fixture for capturing logs
         """
         mocker.patch.object(
             metadata,
@@ -111,6 +125,11 @@ class TestProject:
         cppython_config = CPPythonLocalConfiguration()
         tool_data = ToolData(cppython=cppython_config)
         pyproject = PyProject(project=pep621, tool=tool_data)
-        project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        with caplog.at_level(logging.WARNING):
+            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+
+        # We don't want to have the log of the calling tool polluted with any default logging
+        assert len(caplog.records) == 0
 
         assert project.enabled

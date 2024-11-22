@@ -33,7 +33,7 @@ class Project(API):
             return
 
         if not pyproject.tool or not pyproject.tool.cppython:
-            self.logger.warning("The pyproject.toml file doesn't contain the `tool.cppython` table")
+            self.logger.info("The pyproject.toml file doesn't contain the `tool.cppython` table")
             return
 
         self._data = builder.build(pyproject.project, pyproject.tool.cppython)
