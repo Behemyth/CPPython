@@ -44,7 +44,7 @@ class TestResolve:
 
         class_variables = vars(resolved)
 
-        assert len(class_variables)
+        assert class_variables
         assert None not in class_variables.values()
 
     @staticmethod
