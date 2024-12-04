@@ -44,6 +44,7 @@ git = "cppython.plugins.git.plugin:GitSCM"
 cmake = "cppython.plugins.cmake.plugin:CMakeGenerator"
 
 [project.entry-points."cppython.provider"]
+conan = "cppython.plugins.conan.plugin:ConanProvider"
 vcpkg = "cppython.plugins.vcpkg.plugin:VcpkgProvider"
 
 [project.entry-points.pdm]
