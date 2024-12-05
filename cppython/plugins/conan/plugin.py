@@ -27,6 +27,11 @@ class ConanProvider(Provider):
         self.core_data: CorePluginData = core_data
         self.data: ConanData = resolve_conan_data(configuration_data, core_data)
 
+        self._provider_file = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
+        self._provider_url = (
+            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake'
+        )
+
     @staticmethod
     def _download_file(url: str, file: Path) -> None:
         """Replaces the given file with the contents of the url"""
@@ -59,20 +64,16 @@ class ConanProvider(Provider):
 
     def install(self) -> None:
         """Installs the provider"""
-        conan_provider = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
-
         self._download_file(
-            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake',
-            conan_provider,
+            self._provider_url,
+            self._provider_file,
         )
 
     def update(self) -> None:
         """Updates the provider"""
-        conan_provider = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
-
         self._download_file(
-            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake',
-            conan_provider,
+            self._provider_url,
+            self._provider_file,
         )
 
     @staticmethod
@@ -87,8 +88,7 @@ class ConanProvider(Provider):
         """
         return sync_type in CMakeGenerator.sync_types()
 
-    @staticmethod
-    def sync_data(consumer: SyncConsumer) -> SyncData:
+    def sync_data(self, consumer: SyncConsumer) -> SyncData:
         """_summary_
 
         Args:
@@ -99,6 +99,6 @@ class ConanProvider(Provider):
         """
         for sync_type in consumer.sync_types():
             if sync_type == CMakeSyncData:
-                return CMakeSyncData(provider_name=TypeName('conan'), top_level_includes=Path('test'))
+                return CMakeSyncData(provider_name=TypeName('conan'), top_level_includes=self._provider_file)
 
         raise NotSupportedError('OOF')
