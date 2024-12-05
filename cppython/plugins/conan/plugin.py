@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Any
 
+import requests
+
 from cppython.core.plugin_schema.generator import SyncConsumer
 from cppython.core.plugin_schema.provider import Provider, ProviderPluginGroupData, SupportedProviderFeatures
 from cppython.core.schema import CorePluginData, Information, SyncData
@@ -24,6 +26,15 @@ class ConanProvider(Provider):
         self.group_data: ProviderPluginGroupData = group_data
         self.core_data: CorePluginData = core_data
         self.data: ConanData = resolve_conan_data(configuration_data, core_data)
+
+    @staticmethod
+    def _download_file(url: str, file: Path) -> None:
+        """Replaces the given file with the contents of the url"""
+        file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file, 'wb') as out_file:
+            content = requests.get(url, stream=True).content
+            out_file.write(content)
 
     @staticmethod
     def features(directory: Path) -> SupportedProviderFeatures:
@@ -48,11 +59,21 @@ class ConanProvider(Provider):
 
     def install(self) -> None:
         """Installs the provider"""
-        pass
+        conan_provider = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
+
+        self._download_file(
+            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake',
+            conan_provider,
+        )
 
     def update(self) -> None:
         """Updates the provider"""
-        pass
+        conan_provider = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
+
+        self._download_file(
+            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake',
+            conan_provider,
+        )
 
     @staticmethod
     def supported_sync_type(sync_type: type[SyncData]) -> bool:
