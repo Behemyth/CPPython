@@ -54,8 +54,8 @@ cppython = "cppython.plugins.pdm.plugin:CPPythonPlugin"
 
 [dependency-groups]
 lint = [
-  "ruff>=0.8.1",
-  "mypy>=1.13",
+  "ruff>=0.8.4",
+  "mypy>=1.14",
 ]
 test = [
   "pytest>=8.3.4",
