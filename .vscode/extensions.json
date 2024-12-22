@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "ms-python.mypy-type-checker",
-        "ms-python.black-formatter",
         "asciidoctor.asciidoctor-vscode",
         "charliermarsh.ruff"
     ]
