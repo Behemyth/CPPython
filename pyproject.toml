@@ -73,7 +73,6 @@ testpaths = [
 ]
 
 [tool.mypy]
-enable_incomplete_feature = ["NewGenericSyntax"]
 exclude = "__pypackages__"
 plugins = ["pydantic.mypy"]
 strict = true

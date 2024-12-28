@@ -38,9 +38,10 @@ class TestBuilder:
         logger = logging.getLogger()
         builder = Builder(project_configuration, logger)
 
-        mocker.patch.object(
-            metadata,
-            'entry_points',
+        # Insert ourself into the builder and load the mock plugins by returning them directly in the expected order
+        #   they will be built
+        mocker.patch(
+            'cppython.builder.entry_points',
             return_value=[metadata.EntryPoint(name='mock', value='mock', group='mock')],
         )
         mocker.patch.object(metadata.EntryPoint, 'load', side_effect=[MockGenerator, MockProvider, MockSCM])

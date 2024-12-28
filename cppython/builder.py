@@ -132,8 +132,10 @@ class Resolver:
         group_name = 'generator'
         plugin_types: list[type[Generator]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, Generator):
                 self._logger.warning(
@@ -161,8 +163,10 @@ class Resolver:
         group_name = 'provider'
         plugin_types: list[type[Provider]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, Provider):
                 self._logger.warning(
@@ -190,8 +194,10 @@ class Resolver:
         group_name = 'scm'
         plugin_types: list[type[SCM]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, SCM):
                 self._logger.warning(
