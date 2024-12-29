@@ -60,14 +60,17 @@ class CMakeGenerator(Generator):
         Args:
             sync_data: The input data
         """
-        if isinstance(sync_data, CMakeSyncData):
-            self._cppython_preset_directory.mkdir(parents=True, exist_ok=True)
-            self._provider_directory.mkdir(parents=True, exist_ok=True)
+        match sync_data:
+            case CMakeSyncData():
+                self._cppython_preset_directory.mkdir(parents=True, exist_ok=True)
+                self._provider_directory.mkdir(parents=True, exist_ok=True)
 
-            self.builder.write_provider_preset(self._provider_directory, sync_data)
+                self.builder.write_provider_preset(self._provider_directory, sync_data)
 
-            cppython_preset_file = self.builder.write_cppython_preset(
-                self._cppython_preset_directory, self._provider_directory, sync_data
-            )
+                cppython_preset_file = self.builder.write_cppython_preset(
+                    self._cppython_preset_directory, self._provider_directory, sync_data
+                )
 
-            self.builder.write_root_presets(self.data.preset_file, cppython_preset_file)
+                self.builder.write_root_presets(self.data.preset_file, cppython_preset_file)
+            case _:
+                raise ValueError('Unsupported sync data type')

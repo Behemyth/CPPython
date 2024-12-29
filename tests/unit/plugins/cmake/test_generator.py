@@ -16,6 +16,8 @@ from cppython.plugins.cmake.schema import (
 from cppython.test.pytest.tests import GeneratorUnitTests
 from cppython.utility.utility import TypeName
 
+pytest_plugins = ['tests.fixtures.cmake']
+
 
 class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
     """The tests for the CMake generator"""

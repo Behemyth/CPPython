@@ -8,6 +8,8 @@ from cppython.plugins.cmake.plugin import CMakeGenerator
 from cppython.plugins.cmake.schema import CMakeConfiguration
 from cppython.test.pytest.tests import GeneratorIntegrationTests
 
+pytest_plugins = ['tests.fixtures.cmake']
+
 
 class TestCPPythonGenerator(GeneratorIntegrationTests[CMakeGenerator]):
     """The tests for the CMake generator"""
