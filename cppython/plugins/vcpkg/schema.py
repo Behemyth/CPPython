@@ -45,5 +45,6 @@ class Manifest(CPPythonModel):
 
     version_string: Annotated[str, Field(alias='version-string', description='The arbitrary version string')] = ''
 
+    description: Annotated[str, Field(description='The project description')] = ''
     homepage: Annotated[HttpUrl | None, Field(description='Homepage URL')] = None
     dependencies: Annotated[list[VcpkgDependency], Field(description='List of dependencies')] = []
