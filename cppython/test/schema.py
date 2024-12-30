@@ -1,8 +1,9 @@
 """Data schemas for plugin testing"""
 
+from pathlib import Path
 from typing import Annotated
 
-from pydantic import DirectoryPath, Field
+from pydantic import Field
 
 from cppython.core.schema import CPPythonModel
 
@@ -12,7 +13,7 @@ class Variant[T: CPPythonModel](CPPythonModel):
 
     configuration: Annotated[T, Field(description='The configuration data')]
     directory: Annotated[
-        DirectoryPath | None,
+        Path | None,
         Field(description='The directory to mount alongside the configuration. `tests/build/<directory>`'),
     ] = None
 

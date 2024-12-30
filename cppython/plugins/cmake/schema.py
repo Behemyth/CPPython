@@ -66,7 +66,7 @@ class CMakeConfiguration(CPPythonModel):
     """Configuration"""
 
     preset_file: Annotated[
-        FilePath,
+        Path,
         Field(
             description="The CMakePreset.json file that will be searched for the given 'configuration_name'",
         ),

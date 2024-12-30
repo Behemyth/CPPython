@@ -7,6 +7,7 @@ import pytest
 from cppython.plugins.cmake.plugin import CMakeGenerator
 from cppython.plugins.cmake.schema import CMakeConfiguration
 from cppython.test.pytest.tests import GeneratorIntegrationTests
+from cppython.test.schema import Variant
 
 pytest_plugins = ['tests.fixtures.cmake']
 
@@ -16,7 +17,7 @@ class TestCPPythonGenerator(GeneratorIntegrationTests[CMakeGenerator]):
 
     @staticmethod
     @pytest.fixture(name='plugin_data', scope='session')
-    def fixture_plugin_data(cmake_data: CMakeConfiguration) -> dict[str, Any]:
+    def fixture_plugin_data(cmake_data: Variant[CMakeConfiguration]) -> dict[str, Any]:
         """A required testing hook that allows data generation
 
         Args:
@@ -25,7 +26,7 @@ class TestCPPythonGenerator(GeneratorIntegrationTests[CMakeGenerator]):
         Returns:
             The constructed plugin data
         """
-        return cmake_data.model_dump()
+        return cmake_data.configuration.model_dump()
 
     @staticmethod
     @pytest.fixture(name='plugin_type', scope='session')
