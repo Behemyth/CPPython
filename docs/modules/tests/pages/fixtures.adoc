@@ -32,8 +32,6 @@ Fixtures can be accessed by installing the optional `pytest` module, `cppython.p
 
 With the pytest feature of `pytest_generate_tests` we register multiple dynamic fixtures for collecting test data, both for plugins and for the test suite itself.
 
-=== `project_root`
-
 === `build_<directory>`
 
 A Path object representing the directory named `<directory>` in the build directory.
