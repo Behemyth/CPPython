@@ -2,13 +2,46 @@
 
 Fixtures can be accessed by installing the optional `pytest` module, `cppython.pytest`.
 
+== Static Fixtures
+
+=== `install_path`
+
+=== `pep621_configuration`
+
+=== `pep621_data`
+
+=== `cppython_local_configuration`
+
+=== `cppython_global_configuration`
+
+=== `plugin_build_data`
+
+=== `plugin_cppython_data`
+
+=== `cppython_data`
+
+=== `core_data`
+
+=== `project_configuration`
+
+=== `project_data`
+
+=== `project`
+
 == Dynamic Fixtures
 
 With the pytest feature of `pytest_generate_tests` we register multiple dynamic fixtures for collecting test data, both for plugins and for the test suite itself.
 
+=== `project_root`
 
-=== `build_<directory>` Fixture
+=== `build_<directory>`
+
+A Path object representing the directory named `<directory>` in the build directory.
 
 * Discovered from `tests/build/<directory>`
-* The contents of the directory are copied to a temporary directory
 
+=== `mount_<directory>`
+
+A Path object representing the directory named `<directory>` in a new temp_directory.
+
+* Discovered from `tests/build/<directory>`

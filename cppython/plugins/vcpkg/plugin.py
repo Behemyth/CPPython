@@ -77,9 +77,16 @@ class VcpkgProvider(Provider):
 
         try:
             if system_name == 'nt':
-                subprocess_call([str(WindowsPath('bootstrap-vcpkg.bat'))], logger=logger, cwd=path, shell=True)
+                subprocess_call(
+                    [str(WindowsPath('bootstrap-vcpkg.bat')), '-disableMetrics'], logger=logger, cwd=path, shell=True
+                )
             elif system_name == 'posix':
-                subprocess_call(['./' + str(PosixPath('bootstrap-vcpkg.sh'))], logger=logger, cwd=path, shell=True)
+                subprocess_call(
+                    ['./' + str(PosixPath('bootstrap-vcpkg.sh')), '-disableMetrics'],
+                    logger=logger,
+                    cwd=path,
+                    shell=True,
+                )
         except ProcessError:
             logger.error('Unable to bootstrap the vcpkg repository', exc_info=True)
             raise
