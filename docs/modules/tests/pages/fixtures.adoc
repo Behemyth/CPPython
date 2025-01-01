@@ -39,9 +39,3 @@ With the pytest feature of `pytest_generate_tests` we register multiple dynamic 
 A Path object representing the directory named `<directory>` in the build directory.
 
 * Discovered from `tests/build/<directory>`
-
-=== `mount_<directory>`
-
-A Path object representing the directory named `<directory>` in a new temp_directory.
-
-* Discovered from `tests/build/<directory>`
