@@ -91,8 +91,7 @@ class VcpkgProvider(Provider):
             logger.error('Unable to bootstrap the vcpkg repository', exc_info=True)
             raise
 
-    @staticmethod
-    def sync_data(consumer: SyncConsumer) -> SyncData:
+    def sync_data(self, consumer: SyncConsumer) -> SyncData:
         """Gathers a data object for the given generator
 
         Args:
@@ -106,7 +105,10 @@ class VcpkgProvider(Provider):
         """
         for sync_type in consumer.sync_types():
             if sync_type == CMakeSyncData:
-                return CMakeSyncData(provider_name=TypeName('vcpkg'), top_level_includes=Path('test'))
+                return CMakeSyncData(
+                    provider_name=TypeName('vcpkg'),
+                    top_level_includes=self.core_data.cppython_data.install_path / 'scripts/buildsystems/vcpkg.cmake',
+                )
 
         raise NotSupportedError('OOF')
 

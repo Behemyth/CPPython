@@ -68,7 +68,10 @@ class CMakeConfiguration(CPPythonModel):
     preset_file: Annotated[
         Path,
         Field(
-            description="The CMakePreset.json file that will be searched for the given 'configuration_name'",
+            description='The CMakePreset.json file that will be managed by CPPython. Will'
+            " be searched for the given 'configuration_name'",
         ),
     ] = Path('CMakePresets.json')
-    configuration_name: Annotated[str, Field(description='The CMake configuration preset to look for and override')]
+    configuration_name: Annotated[
+        str, Field(description='The CMake configuration preset to look for and override inside the given `preset_file`')
+    ]
