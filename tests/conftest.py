@@ -238,9 +238,7 @@ def fixture_core_data(cppython_data: CPPythonData, project_data: ProjectData) ->
     scope='session',
     params=project_variants.variants,
 )
-def fixture_project_configuration(
-    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
-) -> Variant[ProjectConfiguration]:
+def fixture_project_configuration(request: pytest.FixtureRequest) -> Variant[ProjectConfiguration]:
     """Project configuration fixture.
 
     Here we provide overrides on the input variants so that we can use a temporary directory for testing purposes.
@@ -252,17 +250,7 @@ def fixture_project_configuration(
     Returns:
         Configuration with temporary directory capabilities
     """
-    tmp_path = tmp_path_factory.mktemp('workspace-')
     configuration = cast(Variant[ProjectConfiguration], request.param)
-
-    pyproject_file = tmp_path / 'pyproject.toml'
-
-    # Write a dummy file to satisfy the config constraints
-    with open(pyproject_file, 'w', encoding='utf-8'):
-        pass
-
-    configuration.configuration.pyproject_file = pyproject_file
-
     return configuration
 
 

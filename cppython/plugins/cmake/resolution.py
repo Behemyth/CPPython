@@ -18,7 +18,7 @@ def resolve_cmake_data(data: dict[str, Any], core_data: CorePluginData) -> CMake
     """
     parsed_data = CMakeConfiguration(**data)
 
-    root_directory = core_data.project_data.pyproject_file.parent.absolute()
+    root_directory = core_data.project_data.project_root.absolute()
 
     modified_preset = parsed_data.preset_file
     if not modified_preset.is_absolute():

@@ -42,7 +42,7 @@ def resolve_vcpkg_data(data: dict[str, Any], core_data: CorePluginData) -> Vcpkg
     """
     parsed_data = VcpkgConfiguration(**data)
 
-    root_directory = core_data.project_data.pyproject_file.parent.absolute()
+    root_directory = core_data.project_data.project_root.absolute()
 
     modified_install_directory = parsed_data.install_directory
 

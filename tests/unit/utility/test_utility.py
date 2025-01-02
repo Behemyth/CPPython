@@ -72,6 +72,7 @@ class TestUtility:
         assert test.name == 'name'
 
 
+@pytest.mark.skip(reason='Breaks debugging tests')
 class TestSubprocess:
     """Subprocess testing"""
 

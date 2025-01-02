@@ -19,6 +19,8 @@ from cppython.utility.utility import TypeName
 class ConanProvider(Provider):
     """Conan Provider"""
 
+    _provider_url = 'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake'
+
     def __init__(
         self, group_data: ProviderPluginGroupData, core_data: CorePluginData, configuration_data: dict[str, Any]
     ) -> None:
@@ -26,11 +28,6 @@ class ConanProvider(Provider):
         self.group_data: ProviderPluginGroupData = group_data
         self.core_data: CorePluginData = core_data
         self.data: ConanData = resolve_conan_data(configuration_data, core_data)
-
-        self._provider_file = self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake'
-        self._provider_url = (
-            'https://raw.githubusercontent.com/conan-io/cmake-conan/refs/heads/develop2/conan_provider.cmake'
-        )
 
     @staticmethod
     def _download_file(url: str, file: Path) -> None:
@@ -64,17 +61,9 @@ class ConanProvider(Provider):
 
     def install(self) -> None:
         """Installs the provider"""
-        self._download_file(
-            self._provider_url,
-            self._provider_file,
-        )
 
     def update(self) -> None:
         """Updates the provider"""
-        self._download_file(
-            self._provider_url,
-            self._provider_file,
-        )
 
     @staticmethod
     def supported_sync_type(sync_type: type[SyncData]) -> bool:
@@ -99,6 +88,14 @@ class ConanProvider(Provider):
         """
         for sync_type in consumer.sync_types():
             if sync_type == CMakeSyncData:
-                return CMakeSyncData(provider_name=TypeName('conan'), top_level_includes=self._provider_file)
+                return CMakeSyncData(
+                    provider_name=TypeName('conan'),
+                    top_level_includes=self.core_data.cppython_data.tool_path / 'conan' / 'conan_provider.cmake',
+                )
 
         raise NotSupportedError('OOF')
+
+    @classmethod
+    async def download_tooling(cls, directory: Path) -> None:
+        """Downloads the conan provider file"""
+        cls._download_file(cls._provider_url, directory / 'conan_provider.cmake')

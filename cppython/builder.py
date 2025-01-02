@@ -262,7 +262,7 @@ class Resolver:
             The selected SCM plugin type
         """
         for scm_type in scm_plugins:
-            if scm_type.features(project_data.pyproject_file.parent).repository:
+            if scm_type.features(project_data.project_root).repository:
                 return scm_type
 
         self._logger.info('No SCM plugin was found that supports the given path')

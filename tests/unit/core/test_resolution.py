@@ -93,7 +93,7 @@ class TestResolve:
     @staticmethod
     def test_generator_resolve(project_configuration: Variant[ProjectConfiguration]) -> None:
         """Test generator resolution"""
-        project_data = ProjectData(pyproject_file=Path('pyproject.toml'))
+        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 
@@ -116,7 +116,7 @@ class TestResolve:
     @staticmethod
     def test_provider_resolve(project_configuration: Variant[ProjectConfiguration]) -> None:
         """Test provider resolution"""
-        project_data = ProjectData(pyproject_file=Path('pyproject.toml'))
+        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 
@@ -139,7 +139,7 @@ class TestResolve:
     @staticmethod
     def test_scm_resolve(project_configuration: Variant[ProjectConfiguration]) -> None:
         """Test scm resolution"""
-        project_data = ProjectData(pyproject_file=Path('pyproject.toml'))
+        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 

@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Annotated
 
 from pydantic import Field, HttpUrl
-from pydantic.types import DirectoryPath
 
 from cppython.core.schema import CPPythonModel
 
@@ -18,7 +17,7 @@ class VcpkgDependency(CPPythonModel):
 class VcpkgData(CPPythonModel):
     """Resolved vcpkg data"""
 
-    install_directory: DirectoryPath
+    install_directory: Path
     dependencies: list[VcpkgDependency]
 
 

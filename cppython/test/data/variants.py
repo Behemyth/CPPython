@@ -79,7 +79,7 @@ def _project_configuration_list() -> Variants[ProjectConfiguration]:
     # NOTE: pyproject_file will be overridden by fixture
 
     # Default
-    default = ProjectConfiguration(pyproject_file=Path('pyproject.toml'), version='0.1.0')
+    default = ProjectConfiguration(project_root=Path(), version='0.1.0')
     default_variant = Variant[ProjectConfiguration](configuration=default)
 
     data.variants.append(default_variant)

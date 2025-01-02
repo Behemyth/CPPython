@@ -184,7 +184,7 @@ class VcpkgProvider(Provider):
         Raises:
             ProcessError: Failed vcpkg calls
         """
-        manifest_directory = self.core_data.project_data.pyproject_file.parent
+        manifest_directory = self.core_data.project_data.project_root
         manifest = generate_manifest(self.core_data, self.data)
 
         # Write out the manifest
@@ -214,7 +214,8 @@ class VcpkgProvider(Provider):
         Raises:
             ProcessError: Failed vcpkg calls
         """
-        manifest_directory = self.core_data.project_data.pyproject_file.parent
+        manifest_directory = self.core_data.project_data.project_root
+
         manifest = generate_manifest(self.core_data, self.data)
 
         # Write out the manifest

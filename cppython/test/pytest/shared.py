@@ -141,7 +141,7 @@ class BaseUnitTests[T: Plugin](BaseTests[T], metaclass=ABCMeta):
             plugin_type: The type of plugin to test.
             project_configuration: The project configuration to use for testing.
         """
-        assert plugin_type.features(project_configuration.configuration.pyproject_file.parent)
+        assert plugin_type.features(project_configuration.configuration.project_root)
 
     @staticmethod
     def test_information(plugin_type: type[T]) -> None:
@@ -243,17 +243,20 @@ class ProviderTests[T: Provider](DataPluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> ProviderPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+
         return resolve_provider(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod

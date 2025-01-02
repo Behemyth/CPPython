@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Any, NewType, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from pydantic.types import DirectoryPath, FilePath
+from pydantic.types import DirectoryPath
 
 from cppython.utility.plugin import Plugin as SynodicPlugin
 from cppython.utility.utility import TypeName
@@ -20,14 +20,14 @@ class CPPythonModel(BaseModel):
 class ProjectData(CPPythonModel, extra='forbid'):
     """Resolved data of 'ProjectConfiguration'"""
 
-    pyproject_file: Annotated[FilePath, Field(description='The path where the pyproject.toml exists')]
+    project_root: Annotated[Path, Field(description='The path where the pyproject.toml exists')]
     verbosity: Annotated[int, Field(description='The verbosity level as an integer [0,2]')] = 0
 
 
 class ProjectConfiguration(CPPythonModel, extra='forbid'):
     """Project-wide configuration"""
 
-    pyproject_file: Annotated[FilePath, Field(description='The path where the pyproject.toml exists')]
+    project_root: Annotated[Path, Field(description='The path where the pyproject.toml exists')]
     version: Annotated[
         str | None,
         Field(
@@ -55,25 +55,6 @@ class ProjectConfiguration(CPPythonModel, extra='forbid'):
             The clamped input value
         """
         return min(max(value, 0), 2)
-
-    @field_validator('pyproject_file')
-    @classmethod
-    def pyproject_name(cls, value: FilePath) -> FilePath:
-        """Validator that verifies the name of the file
-
-        Args:
-            value: Input to validate
-
-        Raises:
-            ValueError: The given filepath is not named "pyproject.toml"
-
-        Returns:
-            The file path
-        """
-        if value.name != 'pyproject.toml':
-            raise ValueError('The given file is not named "pyproject.toml"')
-
-        return value
 
 
 class PEP621Data(CPPythonModel):
@@ -130,9 +111,9 @@ def _default_install_location() -> Path:
 class CPPythonData(CPPythonModel, extra='forbid'):
     """Resolved CPPython data with local and global configuration"""
 
-    install_path: DirectoryPath
-    tool_path: DirectoryPath
-    build_path: DirectoryPath
+    install_path: Path
+    tool_path: Path
+    build_path: Path
     current_check: bool
     provider_name: TypeName
     generator_name: TypeName
@@ -140,7 +121,7 @@ class CPPythonData(CPPythonModel, extra='forbid'):
 
     @field_validator('install_path', 'tool_path', 'build_path')
     @classmethod
-    def validate_absolute_path(cls, value: DirectoryPath) -> DirectoryPath:
+    def validate_absolute_path(cls, value: Path) -> Path:
         """Enforce the input is an absolute path
 
         Args:
@@ -184,7 +165,7 @@ class PluginGroupData(CPPythonModel, extra='forbid'):
 
     root_directory: Annotated[DirectoryPath, Field(description='The directory of the project')]
     tool_directory: Annotated[
-        DirectoryPath,
+        Path,
         Field(
             description=(
                 'Points to the project plugin directory within the tool directory. '

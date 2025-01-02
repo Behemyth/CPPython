@@ -36,7 +36,7 @@ class TestProject:
         """
         # Use the CPPython directory as the test data
         file = request.config.rootpath / 'pyproject.toml'
-        project_configuration = ProjectConfiguration(pyproject_file=file, version=None)
+        project_configuration = ProjectConfiguration(project_root=file.parent, version=None)
         interface = MockInterface()
 
         pyproject_data = tomllib.loads(file.read_text(encoding='utf-8'))
@@ -58,7 +58,7 @@ class TestProject:
         with open(file_path, 'a', encoding='utf8'):
             pass
 
-        project_configuration = ProjectConfiguration(pyproject_file=file_path, version=None)
+        project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
         interface = MockInterface()
 
         pyproject = PyProject(project=pep621)
@@ -84,7 +84,7 @@ class TestProject:
         with open(file_path, 'a', encoding='utf8'):
             pass
 
-        project_configuration = ProjectConfiguration(pyproject_file=file_path, version=None)
+        project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
         interface = MockInterface()
 
         tool_data = ToolData()
@@ -120,7 +120,7 @@ class TestProject:
         with open(file_path, 'a', encoding='utf8'):
             pass
 
-        project_configuration = ProjectConfiguration(pyproject_file=file_path, version=None)
+        project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
         interface = MockInterface()
 
         cppython_config = CPPythonLocalConfiguration()
