@@ -256,7 +256,9 @@ class ProviderTests[T: Provider](DataPluginTests[T], metaclass=ABCMeta):
             The plugin configuration
         """
         project_data.project_root = tmp_path_factory.mktemp('workspace-')
-
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_provider(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod
@@ -331,17 +333,22 @@ class GeneratorTests[T: Generator](DataPluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> GeneratorPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_generator(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod
@@ -415,17 +422,22 @@ class SCMTests[T: SCM](PluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> SCMPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_scm(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod
