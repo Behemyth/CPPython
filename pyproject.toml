@@ -52,6 +52,9 @@ vcpkg = "cppython.plugins.vcpkg.plugin:VcpkgProvider"
 [project.entry-points.pdm]
 cppython = "cppython.plugins.pdm.plugin:CPPythonPlugin"
 
+[project.entry-points.pytest11]
+cppython = "cppython.test.pytest.fixtures"
+
 [dependency-groups]
 lint = [
   "ruff>=0.8.4",
