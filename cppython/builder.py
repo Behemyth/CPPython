@@ -132,8 +132,10 @@ class Resolver:
         group_name = 'generator'
         plugin_types: list[type[Generator]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, Generator):
                 self._logger.warning(
@@ -141,7 +143,7 @@ class Resolver:
                     f" '{group_name}'"
                 )
             else:
-                self._logger.warning(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
+                self._logger.info(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
                 plugin_types.append(loaded_type)
 
         if not plugin_types:
@@ -161,8 +163,10 @@ class Resolver:
         group_name = 'provider'
         plugin_types: list[type[Provider]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, Provider):
                 self._logger.warning(
@@ -170,7 +174,7 @@ class Resolver:
                     f" '{group_name}'"
                 )
             else:
-                self._logger.warning(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
+                self._logger.info(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
                 plugin_types.append(loaded_type)
 
         if not plugin_types:
@@ -190,8 +194,10 @@ class Resolver:
         group_name = 'scm'
         plugin_types: list[type[SCM]] = []
 
+        entries = entry_points(group=f'cppython.{group_name}')
+
         # Filter entries by type
-        for entry_point in list(entry_points(group=f'cppython.{group_name}')):
+        for entry_point in list(entries):
             loaded_type = entry_point.load()
             if not issubclass(loaded_type, SCM):
                 self._logger.warning(
@@ -199,7 +205,7 @@ class Resolver:
                     f" '{group_name}'"
                 )
             else:
-                self._logger.warning(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
+                self._logger.info(f'{group_name} plugin found: {loaded_type.name()} from {getmodule(loaded_type)}')
                 plugin_types.append(loaded_type)
 
         if not plugin_types:
@@ -227,20 +233,16 @@ class Resolver:
         if pinned_name is not None:
             for loaded_type in plugin_types:
                 if loaded_type.name() == pinned_name:
-                    self._logger.warning(
-                        f'Using {group_name} plugin: {loaded_type.name()} from {getmodule(loaded_type)}'
-                    )
+                    self._logger.info(f'Using {group_name} plugin: {loaded_type.name()} from {getmodule(loaded_type)}')
                     return [loaded_type]
 
-        self._logger.warning(f"'{group_name}_name' was empty. Trying to deduce {group_name}s")
+        self._logger.info(f"'{group_name}_name' was empty. Trying to deduce {group_name}s")
 
         supported_types: list[type[T]] = []
 
         # Deduce types
         for loaded_type in plugin_types:
-            self._logger.warning(
-                f'A {group_name} plugin is supported: {loaded_type.name()} from {getmodule(loaded_type)}'
-            )
+            self._logger.info(f'A {group_name} plugin is supported: {loaded_type.name()} from {getmodule(loaded_type)}')
             supported_types.append(loaded_type)
 
         # Fail
@@ -260,7 +262,7 @@ class Resolver:
             The selected SCM plugin type
         """
         for scm_type in scm_plugins:
-            if scm_type.features(project_data.pyproject_file.parent).repository:
+            if scm_type.features(project_data.project_root).repository:
                 return scm_type
 
         self._logger.info('No SCM plugin was found that supports the given path')
@@ -342,7 +344,7 @@ class Resolver:
         generator_data = resolve_generator(core_data.project_data, cppython_plugin_data)
 
         if not generator_configuration:
-            self._logger.error(
+            self._logger.info(
                 "The pyproject.toml table 'tool.cppython.generator' does not exist. Sending generator empty data",
             )
 
@@ -377,7 +379,7 @@ class Resolver:
         provider_data = resolve_provider(core_data.project_data, cppython_plugin_data)
 
         if not provider_configuration:
-            self._logger.error(
+            self._logger.info(
                 "The pyproject.toml table 'tool.cppython.provider' does not exist. Sending provider empty data",
             )
 
@@ -393,17 +395,16 @@ class Resolver:
 class Builder:
     """Helper class for building CPPython projects"""
 
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+
     def __init__(self, project_configuration: ProjectConfiguration, logger: Logger) -> None:
         """Initializes the builder"""
         self._project_configuration = project_configuration
         self._logger = logger
 
-        # Default logging levels
-        levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-
         # Add default output stream
         self._logger.addHandler(logging.StreamHandler())
-        self._logger.setLevel(levels[project_configuration.verbosity])
+        self._logger.setLevel(Builder.levels[project_configuration.verbosity])
 
         self._logger.info('Logging setup complete')
 

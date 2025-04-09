@@ -1,0 +1,33 @@
+[project]
+description = "A simple project showing how to use vcpkg with CPPython"
+name = "cppython-vcpkg-cmake-simple"
+version = "1.0.0"
+
+license = {text = "MIT"}
+
+authors = [
+  {name = "Synodic Software", email = "contact@synodic.software"},
+]
+
+requires-python = ">=3.13"
+
+dependencies = [
+  "cppython>=0.1.0",
+]
+
+[tool.cppython]
+generator-name = "cmake"
+provider-name = "vcpkg"
+
+install-path = "install"
+
+dependencies = [
+  "fmt>=11.0.2",
+]
+
+[tool.cppython.generator]
+
+[tool.cppython.provider]
+
+[tool.pdm]
+distribution = false

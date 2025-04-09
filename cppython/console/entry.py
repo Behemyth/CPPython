@@ -49,9 +49,8 @@ def main(
         debug: Debug mode
     """
     path = _find_pyproject_file()
-    file_path = path / 'pyproject.toml'
 
-    project_configuration = ProjectConfiguration(verbosity=verbose, debug=debug, pyproject_file=file_path, version=None)
+    project_configuration = ProjectConfiguration(verbosity=verbose, debug=debug, project_root=path, version=None)
 
     interface = ConsoleInterface()
     context.obj = ConsoleConfiguration(project_configuration=project_configuration, interface=interface)
@@ -79,7 +78,7 @@ def install(
     if (configuration := context.find_object(ConsoleConfiguration)) is None:
         raise ValueError('The configuration object is missing')
 
-    path = configuration.project_configuration.pyproject_file
+    path = configuration.project_configuration.project_root / 'pyproject.toml'
     pyproject_data = loads(path.read_text(encoding='utf-8'))
 
     project = Project(configuration.project_configuration, configuration.interface, pyproject_data)
@@ -101,7 +100,7 @@ def update(
     if (configuration := context.find_object(ConsoleConfiguration)) is None:
         raise ValueError('The configuration object is missing')
 
-    path = configuration.project_configuration.pyproject_file
+    path = configuration.project_configuration.project_root / 'pyproject.toml'
     pyproject_data = loads(path.read_text(encoding='utf-8'))
 
     project = Project(configuration.project_configuration, configuration.interface, pyproject_data)

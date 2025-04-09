@@ -1,11 +1,11 @@
 """Unit test the provider plugin"""
 
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from cppython.core.utility import write_model_json
 from cppython.plugins.cmake.builder import Builder
 from cppython.plugins.cmake.plugin import CMakeGenerator
 from cppython.plugins.cmake.schema import (
@@ -14,7 +14,10 @@ from cppython.plugins.cmake.schema import (
     CMakeSyncData,
 )
 from cppython.test.pytest.tests import GeneratorUnitTests
+from cppython.test.schema import Variant
 from cppython.utility.utility import TypeName
+
+pytest_plugins = ['tests.fixtures.cmake']
 
 
 class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
@@ -22,7 +25,7 @@ class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
 
     @staticmethod
     @pytest.fixture(name='plugin_data', scope='session')
-    def fixture_plugin_data(cmake_data: CMakeConfiguration) -> dict[str, Any]:
+    def fixture_plugin_data(cmake_data: Variant[CMakeConfiguration]) -> dict[str, Any]:
         """A required testing hook that allows data generation
 
         Args:
@@ -31,7 +34,7 @@ class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
         Returns:
             The constructed plugin data
         """
-        return cmake_data.model_dump()
+        return cmake_data.configuration.model_dump()
 
     @staticmethod
     @pytest.fixture(name='plugin_type', scope='session')
@@ -101,7 +104,10 @@ class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
 
         root_file = tmp_path / 'CMakePresets.json'
         presets = CMakePresets()
-        write_model_json(root_file, presets)
+
+        serialized = json.loads(presets.model_dump_json(exclude_none=True, by_alias=False))
+        with open(root_file, 'w', encoding='utf8') as file:
+            json.dump(serialized, file, ensure_ascii=False, indent=4)
 
         data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
         builder.write_provider_preset(provider_directory, data)
@@ -134,7 +140,9 @@ class TestCPPythonGenerator(GeneratorUnitTests[CMakeGenerator]):
 
         root_file = relative_indirection / 'CMakePresets.json'
         presets = CMakePresets()
-        write_model_json(root_file, presets)
+        serialized = json.loads(presets.model_dump_json(exclude_none=True, by_alias=False))
+        with open(root_file, 'w', encoding='utf8') as file:
+            json.dump(serialized, file, ensure_ascii=False, indent=4)
 
         data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
         builder.write_provider_preset(provider_directory, data)

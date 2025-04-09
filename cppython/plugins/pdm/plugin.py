@@ -33,15 +33,13 @@ class CPPythonPlugin(Interface):
             dry_run: If true, won't perform any actions
             _kwargs: Sink for unknown arguments
         """
-        pyproject_file = project.root.absolute() / project.PYPROJECT_FILENAME
+        root = project.root.absolute()
 
         # Attach configuration for CPPythonPlugin callbacks
         version = project.pyproject.metadata.get('version')
         verbosity = project.core.ui.verbosity
 
-        project_configuration = ProjectConfiguration(
-            pyproject_file=pyproject_file, verbosity=verbosity, version=version
-        )
+        project_configuration = ProjectConfiguration(project_root=root, verbosity=verbosity, version=version)
 
         self.logger.info("CPPython: Entered 'on_post_install'")
 

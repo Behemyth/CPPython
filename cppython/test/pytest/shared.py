@@ -27,11 +27,12 @@ from cppython.core.schema import (
     ProjectConfiguration,
     ProjectData,
 )
-from cppython.test.pytest.variants import (
+from cppython.test.data.mocks import (
     generator_variants,
     provider_variants,
     scm_variants,
 )
+from cppython.test.schema import Variant
 
 
 class BaseTests[T: Plugin](metaclass=ABCMeta):
@@ -130,7 +131,7 @@ class BaseUnitTests[T: Plugin](BaseTests[T], metaclass=ABCMeta):
     """Unit testing information for all plugin test classes"""
 
     @staticmethod
-    def test_feature_extraction(plugin_type: type[T], project_configuration: ProjectConfiguration) -> None:
+    def test_feature_extraction(plugin_type: type[T], project_configuration: Variant[ProjectConfiguration]) -> None:
         """Test the feature extraction of a plugin.
 
         This method tests the feature extraction functionality of a plugin by asserting that the features
@@ -140,7 +141,7 @@ class BaseUnitTests[T: Plugin](BaseTests[T], metaclass=ABCMeta):
             plugin_type: The type of plugin to test.
             project_configuration: The project configuration to use for testing.
         """
-        assert plugin_type.features(project_configuration.pyproject_file.parent)
+        assert plugin_type.features(project_configuration.configuration.project_root)
 
     @staticmethod
     def test_information(plugin_type: type[T]) -> None:
@@ -225,6 +226,17 @@ class DataPluginIntegrationTests[T: DataPlugin](BaseIntegrationTests[T], metacla
 class DataPluginUnitTests[T: DataPlugin](BaseUnitTests[T], metaclass=ABCMeta):
     """Unit testing information for all data plugin test classes"""
 
+    @staticmethod
+    def test_empty_data(
+        plugin_type: type[T],
+        plugin_group_data: DataPluginGroupData,
+        core_plugin_data: CorePluginData,
+    ) -> None:
+        """All data plugins should be able to be constructed with empty data"""
+        plugin = plugin_type(plugin_group_data, core_plugin_data, {})
+
+        assert plugin, 'The plugin should be able to be constructed with empty data'
+
 
 class ProviderTests[T: Provider](DataPluginTests[T], metaclass=ABCMeta):
     """Shared functionality between the different Provider testing categories"""
@@ -242,17 +254,22 @@ class ProviderTests[T: Provider](DataPluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> ProviderPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_provider(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod
@@ -327,17 +344,22 @@ class GeneratorTests[T: Generator](DataPluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> GeneratorPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_generator(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod
@@ -411,17 +433,22 @@ class SCMTests[T: SCM](PluginTests[T], metaclass=ABCMeta):
     @staticmethod
     @pytest.fixture(name='plugin_group_data', scope='session')
     def fixture_plugin_group_data(
-        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData
+        project_data: ProjectData, cppython_plugin_data: CPPythonPluginData, tmp_path_factory: pytest.TempPathFactory
     ) -> SCMPluginGroupData:
         """Generates plugin configuration data generation from environment configuration
 
         Args:
             project_data: The project data fixture
             cppython_plugin_data:The plugin configuration fixture
+            tmp_path_factory: The temporary path factory
 
         Returns:
             The plugin configuration
         """
+        project_data.project_root = tmp_path_factory.mktemp('workspace-')
+        # Install path is already pinned to a temp directory to share downloaded resources
+        cppython_plugin_data.build_path = project_data.project_root / 'build'
+        cppython_plugin_data.tool_path = project_data.project_root / 'tool'
         return resolve_scm(project_data=project_data, cppython_data=cppython_plugin_data)
 
     @staticmethod

@@ -26,4 +26,3 @@ __pypackages__/
 !.vscode/extensions.json
 /.mypy_cache
 node_modules/
-build/
