@@ -12,12 +12,12 @@ from cppython.core.plugin_schema.provider import (
     ProviderPluginGroupData,
     SupportedProviderFeatures,
 )
-from cppython.core.schema import CorePluginData, Information, SyncData
+from cppython.core.schema import CorePluginData, Information, SupportedFeatures, SyncData
 from cppython.plugins.cmake.plugin import CMakeGenerator
 from cppython.plugins.cmake.schema import CMakeSyncData
 from cppython.plugins.vcpkg.resolution import generate_manifest, resolve_vcpkg_data
 from cppython.plugins.vcpkg.schema import VcpkgData
-from cppython.utility.exception import NotSupportedError
+from cppython.utility.exception import NotSupportedError, ProviderInstallationError, ProviderToolingError
 from cppython.utility.utility import TypeName
 
 
@@ -33,14 +33,14 @@ class VcpkgProvider(Provider):
         self.data: VcpkgData = resolve_vcpkg_data(configuration_data, core_data)
 
     @staticmethod
-    def features(directory: Path) -> SupportedProviderFeatures:
+    def features(directory: Path) -> SupportedFeatures:
         """Queries vcpkg support
 
         Args:
             directory: The directory to query
 
         Returns:
-            Supported features
+            Supported features - `SupportedProviderFeatures`. Cast to this type to help us avoid generic typing
         """
         return SupportedProviderFeatures()
 
@@ -92,10 +92,9 @@ class VcpkgProvider(Provider):
                     capture_output=True,
                 )
         except subprocess.CalledProcessError as e:
-            logger.error(
-                'Unable to bootstrap the vcpkg repository: %s', e.stderr.decode() if e.stderr else str(e), exc_info=True
-            )
-            raise
+            error_msg = e.stderr.decode() if e.stderr else str(e)
+            logger.error('Unable to bootstrap the vcpkg repository: %s', error_msg, exc_info=True)
+            raise ProviderToolingError('vcpkg', 'bootstrap', error_msg, e) from e
 
     def sync_data(self, consumer: SyncConsumer) -> SyncData:
         """Gathers a data object for the given generator
@@ -167,8 +166,9 @@ class VcpkgProvider(Provider):
                     capture_output=True,
                 )
             except subprocess.CalledProcessError as e:
-                logger.exception('Unable to update the vcpkg repository: %s', e.stderr.decode() if e.stderr else str(e))
-                raise
+                error_msg = e.stderr.decode() if e.stderr else str(e)
+                logger.error('Unable to update the vcpkg repository: %s', error_msg, exc_info=True)
+                raise ProviderToolingError('vcpkg', 'update', error_msg, e) from e
         else:
             try:
                 logger.debug("Cloning the vcpkg repository to '%s'", directory.absolute())
@@ -182,8 +182,9 @@ class VcpkgProvider(Provider):
                 )
 
             except subprocess.CalledProcessError as e:
-                logger.exception('Unable to clone the vcpkg repository: %s', e.stderr.decode() if e.stderr else str(e))
-                raise
+                error_msg = e.stderr.decode() if e.stderr else str(e)
+                logger.error('Unable to clone the vcpkg repository: %s', error_msg, exc_info=True)
+                raise ProviderToolingError('vcpkg', 'clone', error_msg, e) from e
 
         cls._update_provider(directory)
 
@@ -198,17 +199,21 @@ class VcpkgProvider(Provider):
             file.write(serialized)
 
         executable = self.core_data.cppython_data.install_path / 'vcpkg'
+        install_directory = self.data.install_directory
+        build_path = self.core_data.cppython_data.build_path
+
         logger = getLogger('cppython.vcpkg')
         try:
             subprocess.run(
-                [str(executable), 'install', f'--x-install-root={self.data.install_directory}'],
-                cwd=self.core_data.cppython_data.build_path,
+                [str(executable), 'install', f'--x-install-root={str(install_directory)}'],
+                cwd=str(build_path),
                 check=True,
                 capture_output=True,
             )
         except subprocess.CalledProcessError as e:
-            logger.exception('Unable to install project dependencies: %s', e.stderr.decode() if e.stderr else str(e))
-            raise
+            error_msg = e.stderr.decode() if e.stderr else str(e)
+            logger.error('Unable to install project dependencies: %s', error_msg, exc_info=True)
+            raise ProviderInstallationError('vcpkg', error_msg, e) from e
 
     def update(self) -> None:
         """Called when dependencies need to be updated and written to the lock file."""
@@ -222,14 +227,26 @@ class VcpkgProvider(Provider):
             file.write(serialized)
 
         executable = self.core_data.cppython_data.install_path / 'vcpkg'
+        install_directory = self.data.install_directory
+        build_path = self.core_data.cppython_data.build_path
+
         logger = getLogger('cppython.vcpkg')
         try:
             subprocess.run(
-                [str(executable), 'install', f'--x-install-root={self.data.install_directory}'],
-                cwd=self.core_data.cppython_data.build_path,
+                [str(executable), 'install', f'--x-install-root={str(install_directory)}'],
+                cwd=str(build_path),
                 check=True,
                 capture_output=True,
             )
         except subprocess.CalledProcessError as e:
-            logger.exception('Unable to install project dependencies: %s', e.stderr.decode() if e.stderr else str(e))
-            raise
+            error_msg = e.stderr.decode() if e.stderr else str(e)
+            logger.error('Unable to update project dependencies: %s', error_msg, exc_info=True)
+            raise ProviderInstallationError('vcpkg', error_msg, e) from e
+
+    def publish(self) -> None:
+        """Called when the project needs to be published.
+
+        Raises:
+            NotImplementedError: vcpkg does not support publishing
+        """
+        raise NotImplementedError('vcpkg does not support publishing')

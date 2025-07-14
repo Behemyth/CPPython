@@ -5,6 +5,10 @@ package manager with the CPPython environment. The classes within
 provide structured configuration and data needed by the Conan Provider.
 """
 
+from typing import Annotated
+
+from pydantic import Field
+
 from cppython.core.schema import CPPythonModel
 
 
@@ -26,6 +30,18 @@ class ConanDependency(CPPythonModel):
 class ConanData(CPPythonModel):
     """Resolved conan data"""
 
+    remotes: list[str]
+
+    @property
+    def local_only(self) -> bool:
+        """Check if publishing should be local-only."""
+        return len(self.remotes) == 0
+
 
 class ConanConfiguration(CPPythonModel):
     """Raw conan data"""
+
+    remotes: Annotated[
+        list[str],
+        Field(description='List of remotes to upload to. Empty list means the local conan cache will be used.'),
+    ] = ['conancenter']

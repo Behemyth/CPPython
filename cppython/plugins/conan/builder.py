@@ -83,11 +83,11 @@ class RequiresTransformer(cst.CSTTransformer):
 
         # Insert the new statement after the last attribute assignment
         if last_attribute is not None:
-            new_body = list(updated_node.body.body)
+            new_body = [item for item in updated_node.body.body]
             index = new_body.index(last_attribute)
             new_body.insert(index + 1, new_statement)
         else:
-            new_body = [new_statement] + list(updated_node.body.body)
+            new_body = [new_statement] + [item for item in updated_node.body.body]
         return updated_node.with_changes(body=updated_node.body.with_changes(body=new_body))
 
     def _replace_requires(
@@ -136,10 +136,6 @@ class Builder:
 
             def layout(self):
                 cmake_layout(self)
-
-            def generate(self):
-                tc = CMakeToolchain(self)
-                tc.generate()
 
             def build(self):
                 cmake = CMake(self)

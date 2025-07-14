@@ -1,6 +1,5 @@
 """Test data resolution"""
 
-from pathlib import Path
 from typing import Annotated
 
 import pytest
@@ -27,7 +26,6 @@ from cppython.core.schema import (
     CPPythonModel,
     PEP621Configuration,
     ProjectConfiguration,
-    ProjectData,
 )
 from cppython.utility.utility import TypeName
 
@@ -90,7 +88,6 @@ class TestResolve:
     @staticmethod
     def test_generator_resolve(project_configuration: ProjectConfiguration) -> None:
         """Test generator resolution"""
-        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 
@@ -104,7 +101,8 @@ class TestResolve:
             cppython_local_configuration, cppython_global_configuration, project_data, plugin_build_data
         )
 
-        MockGenerator = type('MockGenerator', (Generator,), {})
+        class MockGenerator(Generator):
+            """Mock generator for testing"""
 
         cppython_plugin_data = resolve_cppython_plugin(cppython_data, MockGenerator)
 
@@ -113,7 +111,6 @@ class TestResolve:
     @staticmethod
     def test_provider_resolve(project_configuration: ProjectConfiguration) -> None:
         """Test provider resolution"""
-        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 
@@ -127,7 +124,8 @@ class TestResolve:
             cppython_local_configuration, cppython_global_configuration, project_data, plugin_build_data
         )
 
-        MockProvider = type('MockProvider', (Provider,), {})
+        class MockProvider(Provider):
+            """Mock provider for testing"""
 
         cppython_plugin_data = resolve_cppython_plugin(cppython_data, MockProvider)
 
@@ -136,7 +134,6 @@ class TestResolve:
     @staticmethod
     def test_scm_resolve(project_configuration: ProjectConfiguration) -> None:
         """Test scm resolution"""
-        project_data = ProjectData(project_root=Path())
         cppython_local_configuration = CPPythonLocalConfiguration()
         cppython_global_configuration = CPPythonGlobalConfiguration()
 
@@ -150,7 +147,8 @@ class TestResolve:
             cppython_local_configuration, cppython_global_configuration, project_data, plugin_build_data
         )
 
-        MockSCM = type('MockSCM', (SCM,), {})
+        class MockSCM(SCM):
+            """Mock SCM for testing"""
 
         cppython_plugin_data = resolve_cppython_plugin(cppython_data, MockSCM)
 

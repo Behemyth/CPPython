@@ -5,10 +5,10 @@ from typing import Any
 import pytest
 
 from cppython.plugins.conan.plugin import ConanProvider
-from cppython.test.pytest.classes import ProviderUnitTests
+from cppython.test.pytest.contracts import ProviderUnitTestContract
 
 
-class TestCPPythonProvider(ProviderUnitTests[ConanProvider]):
+class TestConanProvider(ProviderUnitTestContract[ConanProvider]):
     """The tests for the Conan Provider"""
 
     @staticmethod
