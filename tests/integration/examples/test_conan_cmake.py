@@ -14,7 +14,7 @@ from cppython.console.schema import ConsoleInterface
 from cppython.core.schema import ProjectConfiguration
 from cppython.project import Project
 
-pytest_plugins = ['tests.fixtures.example']
+pytest_plugins = ['tests.fixtures.example', 'tests.fixtures.conan']
 
 
 class TestConanCMake:
@@ -49,3 +49,13 @@ class TestConanCMake:
 
         # Verify that the build directory contains the expected files
         assert (path / 'CMakeCache.txt').exists(), f'{path / "CMakeCache.txt"} not found'
+
+        # --- Setup for Publish with modified config ---
+        # Modify the in-memory representation of the pyproject data
+        pyproject_data['tool']['cppython']['providers']['conan']['remotes'] = []
+
+        # Create a new project instance with the modified configuration for the 'publish' step
+        publish_project = Project(project_configuration, interface, pyproject_data)
+
+        # Publish the project to the local cache
+        publish_project.publish()

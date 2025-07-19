@@ -11,6 +11,23 @@ from cppython.plugins.conan.plugin import ConanProvider
 from cppython.plugins.conan.schema import ConanDependency
 
 
+@pytest.fixture(autouse=True)
+def clean_conan_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Sets CONAN_HOME to a temporary directory for each test.
+
+    This ensures all tests run with a clean Conan cache.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture
+        monkeypatch: Pytest monkeypatch fixture for environment variable manipulation
+    """
+    conan_home = tmp_path / 'conan_home'
+    conan_home.mkdir()
+
+    # Set CONAN_HOME to the temporary directory
+    monkeypatch.setenv('CONAN_HOME', str(conan_home))
+
+
 @pytest.fixture(name='conan_mock_api')
 def fixture_conan_mock_api(mocker: MockerFixture) -> Mock:
     """Creates a mock ConanAPI instance for install/update operations
@@ -154,7 +171,7 @@ def fixture_conan_setup_mocks(
 
     # Mock resolve_conan_dependency
     def mock_resolve(requirement: Requirement) -> ConanDependency:
-        return ConanDependency(name=requirement.name, version_ge=None)
+        return ConanDependency(name=requirement.name)
 
     mock_resolve_conan_dependency = mocker.patch(
         'cppython.plugins.conan.plugin.resolve_conan_dependency', side_effect=mock_resolve
