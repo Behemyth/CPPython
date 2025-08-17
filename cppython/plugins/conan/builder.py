@@ -121,30 +121,53 @@ class Builder:
         self._filename = 'conanfile.py'
 
     @staticmethod
-    def _create_conanfile(conan_file: Path, dependencies: list[ConanDependency]) -> None:
+    def _create_conanfile(conan_file: Path, dependencies: list[ConanDependency], name: str, version: str) -> None:
         """Creates a conanfile.py file with the necessary content."""
         template_string = """
         from conan import ConanFile
-        from conan.tools.cmake import CMake, cmake_layout
+        from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+        from conan.tools.files import copy
 
-        class MyProject(ConanFile):
-            name = "myproject" 
-            version = "1.0"
+        class AutoPackage(ConanFile):
+            name = "${name}"
+            version = "${version}"
             settings = "os", "compiler", "build_type", "arch"
             requires = ${dependencies}
-            generators = "CMakeDeps"
 
             def layout(self):
                 cmake_layout(self)
 
+            def generate(self):
+                deps = CMakeDeps(self)
+                deps.generate()
+                tc = CMakeToolchain(self)
+                tc.user_presets_path = None
+                tc.generate()
+
             def build(self):
                 cmake = CMake(self)
                 cmake.configure()
-                cmake.build()"""
+                cmake.build()
+
+            def package(self):
+                cmake = CMake(self)
+                cmake.install()
+
+            def package_info(self):
+                self.cpp_info.libs = ["${name}"]
+
+            def export_sources(self):
+                copy(self, "CMakeLists.txt", src=self.recipe_folder, dst=self.export_sources_folder)
+                copy(self, "include/*", src=self.recipe_folder, dst=self.export_sources_folder)
+                copy(self, "src/*", src=self.recipe_folder, dst=self.export_sources_folder)
+                copy(self, "cmake/*", src=self.recipe_folder, dst=self.export_sources_folder)
+            """
 
         template = Template(dedent(template_string))
 
         values = {
+            'name': name,
+            'version': version,
             'dependencies': [dependency.requires() for dependency in dependencies],
         }
 
@@ -153,7 +176,9 @@ class Builder:
         with open(conan_file, 'w', encoding='utf-8') as file:
             file.write(result)
 
-    def generate_conanfile(self, directory: DirectoryPath, dependencies: list[ConanDependency]) -> None:
+    def generate_conanfile(
+        self, directory: DirectoryPath, dependencies: list[ConanDependency], name: str, version: str
+    ) -> None:
         """Generate a conanfile.py file for the project."""
         conan_file = directory / self._filename
 
@@ -167,4 +192,4 @@ class Builder:
             conan_file.write_text(modified.code, encoding='utf-8')
         else:
             directory.mkdir(parents=True, exist_ok=True)
-            self._create_conanfile(conan_file, dependencies)
+            self._create_conanfile(conan_file, dependencies, name, version)

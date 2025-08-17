@@ -63,12 +63,11 @@ class CMakeGenerator(Generator):
         match sync_data:
             case CMakeSyncData():
                 self._cppython_preset_directory.mkdir(parents=True, exist_ok=True)
-                self._provider_directory.mkdir(parents=True, exist_ok=True)
 
-                self.builder.write_provider_preset(self._provider_directory, sync_data)
+                cppython_preset_file = self._cppython_preset_directory / 'CPPython.json'
 
                 cppython_preset_file = self.builder.write_cppython_preset(
-                    self._cppython_preset_directory, self._provider_directory, sync_data
+                    self._cppython_preset_directory, cppython_preset_file, sync_data
                 )
 
                 self.builder.write_root_presets(

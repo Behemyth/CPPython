@@ -33,6 +33,39 @@ class VcpkgProvider(Provider):
         self.data: VcpkgData = resolve_vcpkg_data(configuration_data, core_data)
 
     @staticmethod
+    def _handle_subprocess_error(
+        logger_instance, operation: str, error: subprocess.CalledProcessError, exception_class: type
+    ) -> None:
+        """Handles subprocess errors with comprehensive error message formatting.
+
+        Args:
+            logger_instance: The logger instance to use for error logging
+            operation: Description of the operation that failed (e.g., 'install', 'clone')
+            error: The CalledProcessError exception
+            exception_class: The exception class to raise
+
+        Raises:
+            The specified exception_class with the formatted error message
+        """
+        # Capture both stdout and stderr for better error reporting
+        stdout_msg = error.stdout.strip() if error.stdout else ''
+        stderr_msg = error.stderr.strip() if error.stderr else ''
+
+        # Combine both outputs for comprehensive error message
+        error_parts = []
+        if stderr_msg:
+            error_parts.append(f'stderr: {stderr_msg}')
+        if stdout_msg:
+            error_parts.append(f'stdout: {stdout_msg}')
+
+        if not error_parts:
+            error_parts.append(f'Command failed with exit code {error.returncode}')
+
+        error_msg = ' | '.join(error_parts)
+        logger_instance.error('Unable to %s: %s', operation, error_msg, exc_info=True)
+        raise exception_class('vcpkg', operation, error_msg, error) from error
+
+    @staticmethod
     def features(directory: Path) -> SupportedFeatures:
         """Queries vcpkg support
 
@@ -82,6 +115,7 @@ class VcpkgProvider(Provider):
                     shell=True,
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
             elif system_name == 'posix':
                 subprocess.run(
@@ -90,11 +124,10 @@ class VcpkgProvider(Provider):
                     shell=True,
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
         except subprocess.CalledProcessError as e:
-            error_msg = e.stderr.decode() if e.stderr else str(e)
-            logger.error('Unable to bootstrap the vcpkg repository: %s', error_msg, exc_info=True)
-            raise ProviderToolingError('vcpkg', 'bootstrap', error_msg, e) from e
+            cls._handle_subprocess_error(logger, 'bootstrap the vcpkg repository', e, ProviderToolingError)
 
     def sync_data(self, consumer: SyncConsumer) -> SyncData:
         """Gathers a data object for the given generator
@@ -110,12 +143,23 @@ class VcpkgProvider(Provider):
         """
         for sync_type in consumer.sync_types():
             if sync_type == CMakeSyncData:
-                return CMakeSyncData(
-                    provider_name=TypeName('vcpkg'),
-                    top_level_includes=self.core_data.cppython_data.install_path / 'scripts/buildsystems/vcpkg.cmake',
-                )
+                return self._create_cmake_sync_data()
 
         raise NotSupportedError('OOF')
+
+    def _create_cmake_sync_data(self) -> CMakeSyncData:
+        """Creates CMake synchronization data with vcpkg configuration.
+
+        Returns:
+            CMakeSyncData configured for vcpkg integration
+        """
+        # Create CMakeSyncData with vcpkg configuration
+        vcpkg_cmake_path = self.core_data.cppython_data.install_path / 'scripts/buildsystems/vcpkg.cmake'
+
+        return CMakeSyncData(
+            provider_name=TypeName('vcpkg'),
+            toolchain_file=vcpkg_cmake_path,
+        )
 
     @classmethod
     def tooling_downloaded(cls, path: Path) -> bool:
@@ -158,17 +202,17 @@ class VcpkgProvider(Provider):
                     cwd=directory,
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
                 subprocess.run(
                     ['git', 'pull'],
                     cwd=directory,
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
             except subprocess.CalledProcessError as e:
-                error_msg = e.stderr.decode() if e.stderr else str(e)
-                logger.error('Unable to update the vcpkg repository: %s', error_msg, exc_info=True)
-                raise ProviderToolingError('vcpkg', 'update', error_msg, e) from e
+                cls._handle_subprocess_error(logger, 'update the vcpkg repository', e, ProviderToolingError)
         else:
             try:
                 logger.debug("Cloning the vcpkg repository to '%s'", directory.absolute())
@@ -179,12 +223,11 @@ class VcpkgProvider(Provider):
                     cwd=directory,
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
 
             except subprocess.CalledProcessError as e:
-                error_msg = e.stderr.decode() if e.stderr else str(e)
-                logger.error('Unable to clone the vcpkg repository: %s', error_msg, exc_info=True)
-                raise ProviderToolingError('vcpkg', 'clone', error_msg, e) from e
+                cls._handle_subprocess_error(logger, 'clone the vcpkg repository', e, ProviderToolingError)
 
         cls._update_provider(directory)
 
@@ -209,11 +252,10 @@ class VcpkgProvider(Provider):
                 cwd=str(build_path),
                 check=True,
                 capture_output=True,
+                text=True,
             )
         except subprocess.CalledProcessError as e:
-            error_msg = e.stderr.decode() if e.stderr else str(e)
-            logger.error('Unable to install project dependencies: %s', error_msg, exc_info=True)
-            raise ProviderInstallationError('vcpkg', error_msg, e) from e
+            self._handle_subprocess_error(logger, 'install project dependencies', e, ProviderInstallationError)
 
     def update(self) -> None:
         """Called when dependencies need to be updated and written to the lock file."""
@@ -237,11 +279,10 @@ class VcpkgProvider(Provider):
                 cwd=str(build_path),
                 check=True,
                 capture_output=True,
+                text=True,
             )
         except subprocess.CalledProcessError as e:
-            error_msg = e.stderr.decode() if e.stderr else str(e)
-            logger.error('Unable to update project dependencies: %s', error_msg, exc_info=True)
-            raise ProviderInstallationError('vcpkg', error_msg, e) from e
+            self._handle_subprocess_error(logger, 'update project dependencies', e, ProviderInstallationError)
 
     def publish(self) -> None:
         """Called when the project needs to be published.

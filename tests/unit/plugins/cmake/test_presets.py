@@ -1,6 +1,6 @@
 """Tests for CMakePresets"""
 
-from pathlib import Path
+import json
 
 from cppython.core.schema import ProjectData
 from cppython.plugins.cmake.builder import Builder
@@ -54,43 +54,6 @@ class TestWrites:
     """Tests for writing the CMakePresets class"""
 
     @staticmethod
-    def test_provider_write(tmp_path: Path) -> None:
-        """Verifies that the provider preset writing works as intended
-
-        Args:
-            tmp_path: The input path the use
-        """
-        builder = Builder()
-
-        includes_file = tmp_path / 'includes.cmake'
-        with includes_file.open('w', encoding='utf-8') as file:
-            file.write('example contents')
-
-        data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
-        builder.write_provider_preset(tmp_path, data)
-
-    @staticmethod
-    def test_cppython_write(tmp_path: Path) -> None:
-        """Verifies that the cppython preset writing works as intended
-
-        Args:
-            tmp_path: The input path the use
-        """
-        builder = Builder()
-
-        provider_directory = tmp_path / 'providers'
-        provider_directory.mkdir(parents=True, exist_ok=True)
-
-        includes_file = provider_directory / 'includes.cmake'
-        with includes_file.open('w', encoding='utf-8') as file:
-            file.write('example contents')
-
-        data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
-        builder.write_provider_preset(provider_directory, data)
-
-        builder.write_cppython_preset(tmp_path, provider_directory, data)
-
-    @staticmethod
     def test_root_write(project_data: ProjectData) -> None:
         """Verifies that the root preset writing works as intended
 
@@ -116,10 +79,15 @@ class TestWrites:
         with open(root_file, 'w', encoding='utf8') as file:
             file.write(serialized)
 
-        data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
-        builder.write_provider_preset(provider_directory, data)
+        # Create a mock provider preset file
+        provider_preset_file = provider_directory / 'CMakePresets.json'
+        provider_preset_data = {'version': 3, 'configurePresets': [{'name': 'test-provider-base', 'hidden': True}]}
+        with provider_preset_file.open('w') as f:
+            json.dump(provider_preset_data, f)
 
-        cppython_preset_file = builder.write_cppython_preset(cppython_preset_directory, provider_directory, data)
+        data = CMakeSyncData(provider_name=TypeName('test-provider'))
+
+        cppython_preset_file = builder.write_cppython_preset(cppython_preset_directory, provider_preset_file, data)
 
         build_directory = project_data.project_root / 'build'
         builder.write_root_presets(
@@ -157,10 +125,15 @@ class TestWrites:
         with open(root_file, 'w', encoding='utf8') as file:
             file.write(serialized)
 
-        data = CMakeSyncData(provider_name=TypeName('test-provider'), top_level_includes=includes_file)
-        builder.write_provider_preset(provider_directory, data)
+        # Create a mock provider preset file
+        provider_preset_file = provider_directory / 'CMakePresets.json'
+        provider_preset_data = {'version': 3, 'configurePresets': [{'name': 'test-provider-base', 'hidden': True}]}
+        with provider_preset_file.open('w') as f:
+            json.dump(provider_preset_data, f)
 
-        cppython_preset_file = builder.write_cppython_preset(cppython_preset_directory, provider_directory, data)
+        data = CMakeSyncData(provider_name=TypeName('test-provider'))
+
+        cppython_preset_file = builder.write_cppython_preset(cppython_preset_directory, provider_preset_file, data)
 
         build_directory = project_data.project_root / 'build'
         builder.write_root_presets(

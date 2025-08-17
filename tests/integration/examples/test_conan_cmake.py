@@ -21,41 +21,83 @@ class TestConanCMake:
     """Test project variation of conan and CMake"""
 
     @staticmethod
-    def test_simple(example_runner: CliRunner) -> None:
-        """Simple project"""
-        # Create project configuration
+    def _create_project(skip_upload: bool = True) -> Project:
+        """Create a project instance with common configuration."""
         project_root = Path.cwd()
-        project_configuration = ProjectConfiguration(project_root=project_root, version=None, verbosity=2, debug=True)
-
-        # Create console interface
+        config = ProjectConfiguration(project_root=project_root, version=None, verbosity=2, debug=True)
         interface = ConsoleInterface()
 
-        # Load pyproject.toml data
         pyproject_path = project_root / 'pyproject.toml'
         pyproject_data = loads(pyproject_path.read_text(encoding='utf-8'))
 
-        # Create and use the project directly
-        project = Project(project_configuration, interface, pyproject_data)
+        if skip_upload:
+            TestConanCMake._ensure_conan_config(pyproject_data)
+            pyproject_data['tool']['cppython']['providers']['conan']['skip_upload'] = True
 
-        # Call install directly to get structured results
+        return Project(config, interface, pyproject_data)
+
+    @staticmethod
+    def _run_cmake_configure() -> None:
+        """Run CMake configuration and assert success."""
+        result = subprocess.run(['cmake', '--preset=default'], capture_output=True, text=True, check=False)
+        assert result.returncode == 0, f'CMake configuration failed: {result.stderr}'
+
+    @staticmethod
+    def _run_cmake_build() -> None:
+        """Run CMake build and assert success."""
+        result = subprocess.run(['cmake', '--build', 'build'], capture_output=True, text=True, check=False)
+        assert result.returncode == 0, f'CMake build failed: {result.stderr}'
+
+    @staticmethod
+    def _verify_build_artifacts() -> Path:
+        """Verify basic build artifacts exist and return build path."""
+        build_path = Path('build').absolute()
+        assert (build_path / 'CMakeCache.txt').exists(), f'CMakeCache.txt not found in {build_path}'
+        return build_path
+
+    @staticmethod
+    def _ensure_conan_config(pyproject_data: dict) -> None:
+        """Helper method to ensure Conan configuration exists in pyproject data"""
+        if 'tool' not in pyproject_data:
+            pyproject_data['tool'] = {}
+        if 'cppython' not in pyproject_data['tool']:
+            pyproject_data['tool']['cppython'] = {}
+        if 'providers' not in pyproject_data['tool']['cppython']:
+            pyproject_data['tool']['cppython']['providers'] = {}
+        if 'conan' not in pyproject_data['tool']['cppython']['providers']:
+            pyproject_data['tool']['cppython']['providers']['conan'] = {}
+
+    @staticmethod
+    def test_simple(example_runner: CliRunner) -> None:
+        """Simple project"""
+        # Create project and install dependencies
+        project = TestConanCMake._create_project(skip_upload=False)
         project.install()
 
-        # Run the CMake configuration command
-        result = subprocess.run(['cmake', '--preset=default'], capture_output=True, text=True, check=False)
+        # Configure and verify build
+        TestConanCMake._run_cmake_configure()
+        TestConanCMake._verify_build_artifacts()
 
-        assert result.returncode == 0, f'Cmake failed: {result.stderr}'
+        # Test publishing with skip_upload enabled
+        publish_project = TestConanCMake._create_project(skip_upload=True)
+        publish_project.publish()
 
-        path = Path('build').absolute()
+    @staticmethod
+    def test_library(example_runner: CliRunner) -> None:
+        """Test library creation and packaging workflow"""
+        # Create project and install dependencies
+        project = TestConanCMake._create_project(skip_upload=False)
+        project.install()
 
-        # Verify that the build directory contains the expected files
-        assert (path / 'CMakeCache.txt').exists(), f'{path / "CMakeCache.txt"} not found'
+        # Configure, build, and verify
+        TestConanCMake._run_cmake_configure()
+        TestConanCMake._run_cmake_build()
+        build_path = TestConanCMake._verify_build_artifacts()
 
-        # --- Setup for Publish with modified config ---
-        # Modify the in-memory representation of the pyproject data
-        pyproject_data['tool']['cppython']['providers']['conan']['skip_upload'] = True
+        # Verify library files exist (platform-specific)
+        lib_files = list(build_path.glob('**/libmathutils.*')) + list(build_path.glob('**/mathutils.lib'))
+        assert len(lib_files) > 0, f'No library files found in {build_path}'
 
-        # Create a new project instance with the modified configuration for the 'publish' step
-        publish_project = Project(project_configuration, interface, pyproject_data)
-
-        # Publish the project to the local cache
+        # Package the library to local cache
+        publish_project = TestConanCMake._create_project(skip_upload=True)
         publish_project.publish()
