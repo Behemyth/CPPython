@@ -121,9 +121,16 @@ class Builder:
         self._filename = 'conanfile.py'
 
     @staticmethod
-    def _create_conanfile(conan_file: Path, dependencies: list[ConanDependency], name: str, version: str) -> None:
+    def _create_conanfile(
+        conan_file: Path,
+        dependencies: list[ConanDependency],
+        dependency_groups: dict[str, list[ConanDependency]],
+        name: str,
+        version: str,
+    ) -> None:
         """Creates a conanfile.py file with the necessary content."""
         template_string = """
+        import os
         from conan import ConanFile
         from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
         from conan.tools.files import copy
@@ -133,6 +140,7 @@ class Builder:
             version = "${version}"
             settings = "os", "compiler", "build_type", "arch"
             requires = ${dependencies}
+            test_requires = ${test_requires}
 
             def layout(self):
                 cmake_layout(self)
@@ -154,7 +162,10 @@ class Builder:
                 cmake.install()
 
             def package_info(self):
-                self.cpp_info.libs = ["${name}"]
+                # Use native CMake config files to preserve FILE_SET information for C++ modules
+                # This tells CMakeDeps to skip generating files and use the package's native config
+                self.cpp_info.set_property("cmake_find_mode", "none")
+                self.cpp_info.builddirs = ["."]
 
             def export_sources(self):
                 copy(self, "CMakeLists.txt", src=self.recipe_folder, dst=self.export_sources_folder)
@@ -164,10 +175,13 @@ class Builder:
 
         template = Template(dedent(template_string))
 
+        test_dependencies = dependency_groups.get('test', [])
+
         values = {
             'name': name,
             'version': version,
             'dependencies': [dependency.requires() for dependency in dependencies],
+            'test_requires': [dependency.requires() for dependency in test_dependencies],
         }
 
         result = template.substitute(values)
@@ -179,6 +193,7 @@ class Builder:
         self,
         directory: DirectoryPath,
         dependencies: list[ConanDependency],
+        dependency_groups: dict[str, list[ConanDependency]],
         name: str,
         version: str,
     ) -> None:
@@ -195,4 +210,4 @@ class Builder:
             conan_file.write_text(modified.code, encoding='utf-8')
         else:
             directory.mkdir(parents=True, exist_ok=True)
-            self._create_conanfile(conan_file, dependencies, name, version)
+            self._create_conanfile(conan_file, dependencies, dependency_groups, name, version)
