@@ -87,7 +87,7 @@ class ConanProvider(Provider):
             raise ProviderInstallationError('conan', f'Failed to prepare {operation} environment: {e}', e) from e
 
         try:
-            build_types = ['Release', 'Debug']
+            build_types = self.data.build_types
             for build_type in build_types:
                 logger.info('Installing dependencies for build type: %s', build_type)
                 self._run_conan_install(conanfile_path, update, build_type, logger)
@@ -121,7 +121,6 @@ class ConanProvider(Provider):
             dependency_groups=resolved_dependency_groups,
             name=self.core_data.pep621_data.name,
             version=self.core_data.pep621_data.version,
-            cmake_binary=self._cmake_binary,
         )
 
         self.builder.generate_conanfile(
@@ -161,6 +160,10 @@ class ConanProvider(Provider):
         """
         # Build conan install command arguments
         command_args = ['install', str(conanfile_path)]
+
+        # Use build_path as the output folder directly
+        output_folder = self.core_data.cppython_data.build_path
+        command_args.extend(['--output-folder', str(output_folder)])
 
         # Add build missing flag
         command_args.extend(['--build', 'missing'])
@@ -277,6 +280,8 @@ class ConanProvider(Provider):
         Returns:
             CMakeSyncData configured for Conan integration
         """
+        # The generated conanfile uses explicit layout (self.folders.generators = "generators")
+        # Combined with --output-folder=build_path, generators are always at build_path/generators/
         conan_toolchain_path = self.core_data.cppython_data.build_path / 'generators' / 'conan_toolchain.cmake'
 
         return CMakeSyncData(

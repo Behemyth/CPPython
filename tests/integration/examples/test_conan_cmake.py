@@ -5,17 +5,30 @@ The tests ensure that the projects build, configure, and execute correctly.
 """
 
 import subprocess
+import sys
 import tomllib
+import zipfile
 from pathlib import Path
 from tomllib import loads
 
+import pytest
 from typer.testing import CliRunner
 
+from cppython.build import build_wheel
 from cppython.console.schema import ConsoleInterface
 from cppython.core.schema import ProjectConfiguration
 from cppython.project import Project
 
 pytest_plugins = ['tests.fixtures.example', 'tests.fixtures.conan', 'tests.fixtures.cmake']
+
+# C++20 modules require Ninja or Visual Studio generator, not Unix Makefiles
+_skip_modules_test = pytest.mark.skipif(
+    sys.platform != 'win32', reason='C++20 modules require Ninja or Visual Studio generator, not Unix Makefiles.'
+)
+
+# On Windows (multi-config generators), use 'default' preset
+# On Linux/Mac (single-config generators), use 'default-release' because CMAKE_BUILD_TYPE is required
+_cmake_preset = 'default' if sys.platform == 'win32' else 'default-release'
 
 
 class TestConanCMake:
@@ -44,7 +57,9 @@ class TestConanCMake:
         Args:
             cmake_binary: Path or command name for the CMake binary to use
         """
-        result = subprocess.run([cmake_binary, '--preset=default'], capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            [cmake_binary, f'--preset={_cmake_preset}'], capture_output=True, text=True, check=False
+        )
         assert result.returncode == 0, f'CMake configuration failed: {result.stderr}'
 
     @staticmethod
@@ -105,6 +120,7 @@ class TestConanCMake:
         publish_project.publish()
 
     @staticmethod
+    @_skip_modules_test
     def test_library(example_runner: CliRunner) -> None:
         """Test library creation and packaging workflow"""
         # Read cmake_binary from the current pyproject.toml (we're in the example directory)
@@ -136,3 +152,41 @@ class TestConanCMake:
         # Package the library to local cache
         publish_project = TestConanCMake._create_project(skip_upload=True)
         publish_project.publish()
+
+    @staticmethod
+    def test_extension(example_runner: CliRunner) -> None:
+        """Test Python extension module built with cppython.build backend and scikit-build-core"""
+        # This test uses the cppython.build backend which wraps scikit-build-core
+        # The build backend automatically runs CPPython's provider workflow
+
+        # Create dist directory for the wheel
+        dist_path = Path('dist')
+        dist_path.mkdir(exist_ok=True)
+
+        # Build the wheel using the cppython.build backend directly
+        wheel_name = build_wheel(str(dist_path))
+
+        # Verify wheel was created
+        wheel_path = dist_path / wheel_name
+        assert wheel_path.exists(), f'Wheel not created at {wheel_path}'
+
+        # Extract and test the extension
+        install_path = Path('install_target')
+        install_path.mkdir(exist_ok=True)
+
+        with zipfile.ZipFile(wheel_path, 'r') as whl:
+            whl.extractall(install_path)
+
+        # Test the installed extension by adding install_target to path
+        test_code = (
+            f'import sys; sys.path.insert(0, {str(install_path)!r}); '
+            "import example_extension; print(example_extension.format_greeting('Test'))"
+        )
+        test_result = subprocess.run(
+            [sys.executable, '-c', test_code],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert test_result.returncode == 0, f'Extension test failed: {test_result.stderr}'
+        assert 'Hello, Test!' in test_result.stdout, f'Unexpected output: {test_result.stdout}'
