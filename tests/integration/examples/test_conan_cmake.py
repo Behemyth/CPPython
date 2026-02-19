@@ -92,6 +92,28 @@ class TestConanCMake:
             pyproject_data['tool']['cppython']['providers']['conan'] = {}
 
     @staticmethod
+    def _verify_conan_package_configs(package_name: str, expected_build_types: list[str]) -> None:
+        """Verify that specified build types exist in the Conan local cache.
+
+        Args:
+            package_name: Name of the package to check (e.g., 'mathutils')
+            expected_build_types: List of build types that should exist (e.g., ['Release', 'Debug'])
+        """
+        result = subprocess.run(
+            ['conan', 'list', f'{package_name}/*:*'],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, f'Failed to list Conan packages: {result.stderr}'
+
+        output = result.stdout
+        for build_type in expected_build_types:
+            assert f'build_type: {build_type}' in output, (
+                f'{build_type} configuration not found in Conan cache for {package_name}. Output: {output}'
+            )
+
+    @staticmethod
     def test_simple(example_runner: CliRunner) -> None:
         """Simple project"""
         # Read cmake_binary from the current pyproject.toml (we're in the example directory)
@@ -153,11 +175,19 @@ class TestConanCMake:
         publish_project = TestConanCMake._create_project(skip_upload=True)
         publish_project.publish()
 
+        # Verify both Debug and Release configurations were published and consumed successfully
+        # conan create already runs test_package for each build type, verifying consumption works
+        TestConanCMake._verify_conan_package_configs('mathutils', ['Release', 'Debug'])
+
     @staticmethod
     def test_extension(example_runner: CliRunner) -> None:
         """Test Python extension module built with cppython.build backend and scikit-build-core"""
         # This test uses the cppython.build backend which wraps scikit-build-core
         # The build backend automatically runs CPPython's provider workflow
+
+        # Install C++ dependencies first (creates generators/ with conan_toolchain.cmake)
+        project = TestConanCMake._create_project()
+        project.install()
 
         # Create dist directory for the wheel
         dist_path = Path('dist')

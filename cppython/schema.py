@@ -24,3 +24,41 @@ class API(Protocol):
             groups: Optional list of dependency groups to update
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def build(self, configuration: str | None = None) -> None:
+        """Builds the project
+
+        Args:
+            configuration: Optional named configuration to use. Interpretation is generator-specific
+                (e.g. CMake preset name, Meson build directory).
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def test(self, configuration: str | None = None) -> None:
+        """Runs project tests
+
+        Args:
+            configuration: Optional named configuration to use. Interpretation is generator-specific.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def bench(self, configuration: str | None = None) -> None:
+        """Runs project benchmarks
+
+        Args:
+            configuration: Optional named configuration to use. Interpretation is generator-specific.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def run(self, target: str, configuration: str | None = None) -> None:
+        """Runs a built executable
+
+        Args:
+            target: The name of the build target to run
+            configuration: Optional named configuration to use. Interpretation is generator-specific.
+        """
+        raise NotImplementedError()

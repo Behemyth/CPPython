@@ -89,6 +89,33 @@ class BuildPreset(CPPythonModel, extra='allow'):
     ] = None
 
 
+class TestPreset(CPPythonModel, extra='allow'):
+    """Partial Test Preset specification for CMake test presets (ctest --preset)"""
+
+    name: str
+    description: Annotated[str | None, Field(description='A human-readable description of the preset.')] = None
+
+    hidden: Annotated[bool | None, Field(description='If true, the preset is hidden and cannot be used directly.')] = (
+        None
+    )
+
+    inherits: Annotated[
+        str | list[str] | None, Field(description='The inherits field allows inheriting from other presets.')
+    ] = None
+    configurePreset: Annotated[
+        str | None,
+        Field(description='The name of a configure preset to associate with this test preset.'),
+    ] = None
+    configuration: Annotated[
+        str | None,
+        Field(description='Build configuration. Equivalent to --config on the command line.'),
+    ] = None
+    filter: Annotated[
+        dict | None,
+        Field(description='Filter for test selection, e.g. include/exclude by label or name.'),
+    ] = None
+
+
 class CMakePresets(CPPythonModel, extra='allow'):
     """The schema for the CMakePresets and CMakeUserPresets files."""
 
@@ -98,6 +125,7 @@ class CMakePresets(CPPythonModel, extra='allow'):
     ] = None
     configurePresets: Annotated[list[ConfigurePreset] | None, Field(description='The list of configure presets')] = None
     buildPresets: Annotated[list[BuildPreset] | None, Field(description='The list of build presets')] = None
+    testPresets: Annotated[list[TestPreset] | None, Field(description='The list of test presets')] = None
 
 
 class CMakeSyncData(SyncData):
@@ -112,6 +140,7 @@ class CMakeData(CPPythonModel):
     preset_file: Path
     configuration_name: str
     cmake_binary: Path | None
+    default_configuration: str | None = None
 
 
 class CMakeConfiguration(CPPythonModel):
@@ -137,5 +166,14 @@ class CMakeConfiguration(CPPythonModel):
         Field(
             description='Path to a specific CMake binary to use. If not specified, uses "cmake" from PATH. '
             'Can be overridden via CMAKE_BINARY environment variable.'
+        ),
+    ] = None
+    default_configuration: Annotated[
+        str | None,
+        Field(
+            alias='default-configuration',
+            description='Default CMake preset name to use for build/test/bench commands. '
+            'When set, the --configuration CLI option is no longer required. '
+            'The CLI --configuration value takes precedence over this default.',
         ),
     ] = None

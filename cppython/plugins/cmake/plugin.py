@@ -1,5 +1,6 @@
 """The CMake generator implementation"""
 
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -77,3 +78,106 @@ class CMakeGenerator(Generator):
                 )
             case _:
                 raise ValueError('Unsupported sync data type')
+
+    def _cmake_command(self) -> str:
+        """Returns the cmake command to use.
+
+        Returns:
+            The cmake binary path as a string
+        """
+        if self.data.cmake_binary:
+            return str(self.data.cmake_binary)
+        return 'cmake'
+
+    def _ctest_command(self) -> str:
+        """Returns the ctest command to use.
+
+        Derives the ctest path from the cmake binary path when available.
+
+        Returns:
+            The ctest binary path as a string
+        """
+        if self.data.cmake_binary:
+            # ctest is typically in the same directory as cmake
+            ctest_path = self.data.cmake_binary.parent / 'ctest'
+            if ctest_path.exists():
+                return str(ctest_path)
+            # Try with .exe on Windows
+            ctest_exe = self.data.cmake_binary.parent / 'ctest.exe'
+            if ctest_exe.exists():
+                return str(ctest_exe)
+        return 'ctest'
+
+    def _resolve_configuration(self, configuration: str | None) -> str:
+        """Resolves the effective CMake preset from CLI argument or default config.
+
+        Args:
+            configuration: The configuration value passed from the CLI, or None
+
+        Returns:
+            The resolved CMake preset name
+
+        Raises:
+            ValueError: If no configuration is available from either CLI or default-configuration config
+        """
+        effective = configuration or self.data.default_configuration
+        if effective is None:
+            raise ValueError(
+                'CMake generator requires a configuration. '
+                "Provide --configuration on the CLI or set 'default-configuration' in [tool.cppython.generators.cmake]."
+            )
+        return effective
+
+    def build(self, configuration: str | None = None) -> None:
+        """Builds the project using cmake --build with the resolved preset.
+
+        Args:
+            configuration: Optional CMake preset name. Overrides default-configuration from config.
+        """
+        preset = self._resolve_configuration(configuration)
+        cmd = [self._cmake_command(), '--build', '--preset', preset]
+        subprocess.run(cmd, check=True, cwd=self.data.preset_file.parent)
+
+    def test(self, configuration: str | None = None) -> None:
+        """Runs tests using ctest with the resolved preset.
+
+        Args:
+            configuration: Optional CMake preset name. Overrides default-configuration from config.
+        """
+        preset = self._resolve_configuration(configuration)
+        cmd = [self._ctest_command(), '--preset', preset]
+        subprocess.run(cmd, check=True, cwd=self.data.preset_file.parent)
+
+    def bench(self, configuration: str | None = None) -> None:
+        """Runs benchmarks using ctest with the resolved preset.
+
+        Args:
+            configuration: Optional CMake preset name. Overrides default-configuration from config.
+        """
+        preset = self._resolve_configuration(configuration)
+        cmd = [self._ctest_command(), '--preset', preset]
+        subprocess.run(cmd, check=True, cwd=self.data.preset_file.parent)
+
+    def run(self, target: str, configuration: str | None = None) -> None:
+        """Runs a built executable by target name.
+
+        Searches the build directory for the executable matching the target name.
+
+        Args:
+            target: The name of the build target/executable to run
+            configuration: Optional CMake preset name. Overrides default-configuration from config.
+
+        Raises:
+            FileNotFoundError: If the target executable cannot be found
+        """
+        build_path = self.core_data.cppython_data.build_path
+
+        # Search for the executable in the build directory
+        candidates = list(build_path.rglob(target)) + list(build_path.rglob(f'{target}.exe'))
+        executables = [c for c in candidates if c.is_file()]
+
+        if not executables:
+            raise FileNotFoundError(f"Could not find executable '{target}' in build directory: {build_path}")
+
+        executable = executables[0]
+        subprocess.run([str(executable)], check=True, cwd=self.data.preset_file.parent)

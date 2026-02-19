@@ -21,7 +21,9 @@ from cppython.plugins.cmake.schema import CMakeSyncData
 from cppython.plugins.conan.builder import Builder
 from cppython.plugins.conan.resolution import resolve_conan_data, resolve_conan_dependency
 from cppython.plugins.conan.schema import ConanData, ConanfileGenerationData
-from cppython.utility.exception import NotSupportedError, ProviderInstallationError
+from cppython.plugins.meson.plugin import MesonGenerator
+from cppython.plugins.meson.schema import MesonSyncData
+from cppython.utility.exception import InstallationVerificationError, NotSupportedError, ProviderInstallationError
 from cppython.utility.utility import TypeName
 
 
@@ -174,6 +176,20 @@ class ConanProvider(Provider):
         # Add build type setting if specified
         if build_type:
             command_args.extend(['-s', f'build_type={build_type}'])
+        # Enable CMakeConfigDeps (the modern CMake config-mode generator)
+        command_args.extend(['-c', 'tools.cmake.cmakedeps:new=will_break_next'])
+
+        # Enable 'import std;' support by providing the experimental UUID in the toolchain
+        # The UUID must be in the toolchain file (before try_compile block) so compiler
+        # detection can create __CMAKE::CXX23 for projects using 'import std;'
+        command_args.extend(
+            [
+                '-c',
+                'tools.cmake.cmaketoolchain:extra_variables={'
+                "'CMAKE_EXPERIMENTAL_CXX_IMPORT_STD': 'd0edc3af-4c50-42ea-a356-e2862fe7a444'"
+                '}',
+            ]
+        )
 
         # Add cmake binary configuration if specified
         if self._cmake_binary:
@@ -194,6 +210,33 @@ class ConanProvider(Provider):
             error_msg = str(e)
             logger.error('Conan install failed: %s', error_msg, exc_info=True)
             raise ProviderInstallationError('conan', error_msg, e) from e
+
+    def verify_installed(self) -> None:
+        """Verify that Conan-generated artifacts exist on disk.
+
+        Checks for the toolchain/native files that ``conan install`` produces
+        in the generators output directory.
+
+        Raises:
+            InstallationVerificationError: If expected artifacts are missing
+        """
+        generators_path = self.core_data.cppython_data.build_path / 'generators'
+        missing: list[str] = []
+
+        if not generators_path.is_dir():
+            missing.append(f'generators directory ({generators_path})')
+        else:
+            # Check for at least one of the expected toolchain files
+            cmake_toolchain = generators_path / 'conan_toolchain.cmake'
+            meson_native = generators_path / 'conan_meson_native.ini'
+
+            if not cmake_toolchain.exists() and not meson_native.exists():
+                missing.append(
+                    f'toolchain files in {generators_path} (expected conan_toolchain.cmake or conan_meson_native.ini)'
+                )
+
+        if missing:
+            raise InstallationVerificationError('conan', missing)
 
     def install(self, groups: list[str] | None = None) -> None:
         """Installs the provider
@@ -221,7 +264,7 @@ class ConanProvider(Provider):
         Returns:
             True if the sync type is supported, False otherwise.
         """
-        return sync_type in CMakeGenerator.sync_types()
+        return sync_type in CMakeGenerator.sync_types() or sync_type in MesonGenerator.sync_types()
 
     def sync_data(self, consumer: SyncConsumer) -> SyncData:
         """Generates synchronization data for the given consumer.
@@ -238,6 +281,8 @@ class ConanProvider(Provider):
         for sync_type in consumer.sync_types():
             if sync_type == CMakeSyncData:
                 return self._sync_with_cmake(consumer)
+            if sync_type == MesonSyncData:
+                return self._create_meson_sync_data()
 
         raise NotSupportedError(f'Unsupported sync types: {consumer.sync_types()}')
 
@@ -270,6 +315,26 @@ class ConanProvider(Provider):
         return CMakeSyncData(
             provider_name=TypeName('conan'),
             toolchain_file=conan_toolchain_path,
+        )
+
+    def _create_meson_sync_data(self) -> MesonSyncData:
+        """Creates Meson synchronization data with Conan toolchain configuration.
+
+        Conan's MesonToolchain generator produces ``conan_meson_native.ini``
+        and ``conan_meson_cross.ini`` files in the generators directory.
+
+        Returns:
+            MesonSyncData configured for Conan integration
+        """
+        generators_path = self.core_data.cppython_data.build_path / 'generators'
+
+        native_file = generators_path / 'conan_meson_native.ini'
+        cross_file = generators_path / 'conan_meson_cross.ini'
+
+        return MesonSyncData(
+            provider_name=TypeName('conan'),
+            native_file=native_file if native_file.exists() else None,
+            cross_file=cross_file if cross_file.exists() else None,
         )
 
     @classmethod
@@ -328,6 +393,30 @@ class ConanProvider(Provider):
         # Skip test dependencies during publishing
         command_args.extend(['-c', 'tools.graph:skip_test=True'])
         command_args.extend(['-c', 'tools.build:skip_test=True'])
+
+        # Enable CMakeConfigDeps (the modern CMake config-mode generator)
+        command_args.extend(['-c', 'tools.cmake.cmakedeps:new=will_break_next'])
+
+        # Force Ninja Multi-Config generator for C++ module support
+        # The Visual Studio generator does not support BMI-only compilation
+        # needed for consuming C++ modules across package boundaries
+        command_args.extend(['-c', 'tools.cmake.cmaketoolchain:generator=Ninja Multi-Config'])
+
+        # Enable 'import std;' support in the CMake toolchain
+        # CMAKE_EXPERIMENTAL_CXX_IMPORT_STD must be in the toolchain file (before
+        # the try_compile block) so compiler detection can create __CMAKE::CXX23.
+        # Note: CMAKE_CXX_MODULE_STD must NOT be in the toolchain because it would
+        # cause ABI detection try_compile to fail (chicken-and-egg with __CMAKE::CXX23).
+        # The UUID is specific to the CMake version and will need updating
+        # when the CMake version changes until import std graduates from experimental.
+        command_args.extend(
+            [
+                '-c',
+                'tools.cmake.cmaketoolchain:extra_variables={'
+                "'CMAKE_EXPERIMENTAL_CXX_IMPORT_STD': 'd0edc3af-4c50-42ea-a356-e2862fe7a444'"
+                '}',
+            ]
+        )
 
         # Add build type setting
         command_args.extend(['-s', f'build_type={build_type}'])

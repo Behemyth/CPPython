@@ -7,7 +7,7 @@ from typing import Any
 from cppython.builder import Builder
 from cppython.core.exception import ConfigException
 from cppython.core.resolution import resolve_model
-from cppython.core.schema import Interface, ProjectConfiguration, PyProject
+from cppython.core.schema import Interface, ProjectConfiguration, PyProject, SyncData
 from cppython.schema import API
 
 
@@ -27,6 +27,11 @@ class Project(API):
         self._enabled = False
         self._interface = interface
         self.logger = logging.getLogger('cppython')
+
+        # Early exit: if no CPPython configuration table, do nothing silently
+        tool_data = pyproject_data.get('tool')
+        if not tool_data or not isinstance(tool_data, dict) or not tool_data.get('cppython'):
+            return
 
         builder = Builder(project_configuration, self.logger)
 
@@ -141,3 +146,102 @@ class Project(API):
 
         # Let provider handle its own exceptions for better error context
         self._data.plugins.provider.publish()
+
+    def prepare_build(self) -> SyncData | None:
+        """Prepare for a PEP 517 build without installing C++ dependencies.
+
+        Syncs generated files (presets, native files) and verifies that a prior
+        ``install()`` call has produced the expected provider artifacts. This is
+        used by the build backend so that ``pdm build`` / ``pip wheel`` can
+        delegate to scikit-build-core or meson-python without re-running the
+        full provider install workflow.
+
+        Returns:
+            The sync data from the provider, or None if the project is not enabled
+
+        Raises:
+            InstallationVerificationError: If provider artifacts are missing
+        """
+        if not self._enabled:
+            self.logger.info('Skipping prepare_build because the project is not enabled')
+            return None
+
+        self.logger.info('Preparing build environment')
+
+        # Sync config files so the generator has up-to-date presets / native files
+        self._data.sync()
+
+        # Verify that a prior install() produced the expected artifacts
+        self._data.plugins.provider.verify_installed()
+
+        # Return sync data for the build backend to inject into config_settings
+        return self._data.plugins.provider.sync_data(self._data.plugins.generator)
+
+    def build(self, configuration: str | None = None) -> None:
+        """Builds the project
+
+        Assumes dependencies have been installed via `install`.
+        Syncs generated files to ensure they are up-to-date, then executes the build.
+
+        Args:
+            configuration: Optional named configuration to use
+        """
+        if not self._enabled:
+            self.logger.info('Skipping build because the project is not enabled')
+            return
+
+        self.logger.info('Building project')
+        self._data.sync()
+        self._data.plugins.generator.build(configuration=configuration)
+
+    def test(self, configuration: str | None = None) -> None:
+        """Runs project tests
+
+        Assumes dependencies have been installed via `install`.
+        Syncs generated files to ensure they are up-to-date, then executes tests.
+
+        Args:
+            configuration: Optional named configuration to use
+        """
+        if not self._enabled:
+            self.logger.info('Skipping test because the project is not enabled')
+            return
+
+        self.logger.info('Running tests')
+        self._data.sync()
+        self._data.plugins.generator.test(configuration=configuration)
+
+    def bench(self, configuration: str | None = None) -> None:
+        """Runs project benchmarks
+
+        Assumes dependencies have been installed via `install`.
+        Syncs generated files to ensure they are up-to-date, then executes benchmarks.
+
+        Args:
+            configuration: Optional named configuration to use
+        """
+        if not self._enabled:
+            self.logger.info('Skipping bench because the project is not enabled')
+            return
+
+        self.logger.info('Running benchmarks')
+        self._data.sync()
+        self._data.plugins.generator.bench(configuration=configuration)
+
+    def run(self, target: str, configuration: str | None = None) -> None:
+        """Runs a built executable
+
+        Assumes dependencies have been installed via `install`.
+        Syncs generated files to ensure they are up-to-date, then executes the target.
+
+        Args:
+            target: The name of the build target to run
+            configuration: Optional named configuration to use
+        """
+        if not self._enabled:
+            self.logger.info('Skipping run because the project is not enabled')
+            return
+
+        self.logger.info('Running target: %s', target)
+        self._data.sync()
+        self._data.plugins.generator.run(target, configuration=configuration)

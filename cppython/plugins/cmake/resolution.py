@@ -35,8 +35,7 @@ def _resolve_cmake_binary(configured_path: Path | None) -> Path | None:
         if env_path.exists():
             return env_path
         logger.warning(
-            'CMAKE_BINARY environment variable points to non-existent path: %s. '
-            'Falling back to PATH lookup.',
+            'CMAKE_BINARY environment variable points to non-existent path: %s. Falling back to PATH lookup.',
             env_binary,
         )
 
@@ -45,8 +44,7 @@ def _resolve_cmake_binary(configured_path: Path | None) -> Path | None:
         if configured_path.exists():
             return configured_path
         logger.warning(
-            'Configured cmake_binary path does not exist: %s. '
-            'Falling back to PATH lookup.',
+            'Configured cmake_binary path does not exist: %s. Falling back to PATH lookup.',
             configured_path,
         )
 
@@ -79,5 +77,8 @@ def resolve_cmake_data(data: dict[str, Any], core_data: CorePluginData) -> CMake
     cmake_binary = _resolve_cmake_binary(parsed_data.cmake_binary)
 
     return CMakeData(
-        preset_file=modified_preset_file, configuration_name=parsed_data.configuration_name, cmake_binary=cmake_binary
+        preset_file=modified_preset_file,
+        configuration_name=parsed_data.configuration_name,
+        cmake_binary=cmake_binary,
+        default_configuration=parsed_data.default_configuration,
     )

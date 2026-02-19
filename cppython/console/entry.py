@@ -1,4 +1,4 @@
-"""A click CLI for CPPython interfacing"""
+"""A Typer CLI for CPPython interfacing"""
 
 from pathlib import Path
 from typing import Annotated
@@ -78,23 +78,25 @@ def _parse_groups_argument(groups: str | None) -> list[str] | None:
 
 
 def _find_pyproject_file() -> Path:
-    """Searches upward for a pyproject.toml file
+    """Searches upward for a pyproject.toml file.
 
     Returns:
-        The found directory
+        The directory containing pyproject.toml
+
+    Raises:
+        AssertionError: If no pyproject.toml is found up to the filesystem root
     """
-    # Search for a path upward
     path = Path.cwd()
 
-    while not path.glob('pyproject.toml'):
-        if path.is_absolute():
+    while True:
+        if (path / 'pyproject.toml').exists():
+            return path
+        parent = path.parent
+        if parent == path:
             raise AssertionError(
                 'This is not a valid project. No pyproject.toml found in the current directory or any of its parents.'
             )
-
-    path = Path(path)
-
-    return path
+        path = parent
 
 
 @app.callback()
@@ -204,3 +206,88 @@ def publish(
     """
     project = get_enabled_project(context)
     project.publish()
+
+
+@app.command()
+def build(
+    context: typer.Context,
+    configuration: Annotated[
+        str | None,
+        typer.Option(help='Named build configuration to use (e.g. CMake preset name, Meson build directory)'),
+    ] = None,
+) -> None:
+    """Build the project
+
+    Assumes dependencies have been installed via `install`.
+
+    Args:
+        context: The CLI configuration object
+        configuration: Optional named configuration
+    """
+    project = get_enabled_project(context)
+    project.build(configuration=configuration)
+
+
+@app.command()
+def test(
+    context: typer.Context,
+    configuration: Annotated[
+        str | None,
+        typer.Option(help='Named build configuration to use (e.g. CMake preset name, Meson build directory)'),
+    ] = None,
+) -> None:
+    """Run project tests
+
+    Assumes dependencies have been installed via `install`.
+
+    Args:
+        context: The CLI configuration object
+        configuration: Optional named configuration
+    """
+    project = get_enabled_project(context)
+    project.test(configuration=configuration)
+
+
+@app.command()
+def bench(
+    context: typer.Context,
+    configuration: Annotated[
+        str | None,
+        typer.Option(help='Named build configuration to use (e.g. CMake preset name, Meson build directory)'),
+    ] = None,
+) -> None:
+    """Run project benchmarks
+
+    Assumes dependencies have been installed via `install`.
+
+    Args:
+        context: The CLI configuration object
+        configuration: Optional named configuration
+    """
+    project = get_enabled_project(context)
+    project.bench(configuration=configuration)
+
+
+@app.command()
+def run(
+    context: typer.Context,
+    target: Annotated[
+        str,
+        typer.Argument(help='The name of the build target/executable to run'),
+    ],
+    configuration: Annotated[
+        str | None,
+        typer.Option(help='Named build configuration to use (e.g. CMake preset name, Meson build directory)'),
+    ] = None,
+) -> None:
+    """Run a built executable
+
+    Assumes dependencies have been installed via `install`.
+
+    Args:
+        context: The CLI configuration object
+        target: The name of the build target to run
+        configuration: Optional named configuration
+    """
+    project = get_enabled_project(context)
+    project.run(target, configuration=configuration)

@@ -69,3 +69,43 @@ class Generator(DataPlugin, SyncConsumer, Protocol):
             The supported features - `SupportedGeneratorFeatures`. Cast to this type to help us avoid generic typing
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def build(self, configuration: str | None = None) -> None:
+        """Builds the project using the generator's build system.
+
+        Executes the build step. The interpretation of ``configuration`` is
+        generator-specific (e.g. CMake preset name, Meson build directory).
+
+        Args:
+            configuration: Optional named configuration override.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def test(self, configuration: str | None = None) -> None:
+        """Runs tests using the generator's build system.
+
+        Args:
+            configuration: Optional named configuration override.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def bench(self, configuration: str | None = None) -> None:
+        """Runs benchmarks using the generator's build system.
+
+        Args:
+            configuration: Optional named configuration override.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def run(self, target: str, configuration: str | None = None) -> None:
+        """Runs a built executable by target name.
+
+        Args:
+            target: The name of the build target/executable to run.
+            configuration: Optional named configuration override.
+        """
+        raise NotImplementedError
