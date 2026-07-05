@@ -18,7 +18,6 @@ from cppython.core.schema import (
 )
 from cppython.project import Project
 from cppython.test.mock.generator import MockGenerator
-from cppython.test.mock.interface import MockInterface
 from cppython.test.mock.provider import MockProvider
 from cppython.test.mock.scm import MockSCM
 from cppython.utility.exception import InstallationVerificationError
@@ -39,10 +38,9 @@ class TestProject:
         # Use the CPPython directory as the test data
         file = request.config.rootpath / 'pyproject.toml'
         project_configuration = ProjectConfiguration(project_root=file.parent, version=None)
-        interface = MockInterface()
 
         pyproject_data = tomllib.loads(file.read_text(encoding='utf-8'))
-        project = Project(project_configuration, interface, pyproject_data)
+        project = Project(project_configuration, pyproject_data)
 
         # Doesn't have the cppython table
         assert not project.enabled
@@ -59,13 +57,12 @@ class TestProject:
             caplog: Pytest fixture for capturing logs
         """
         project_configuration = ProjectConfiguration(project_root=tmp_path, version=None)
-        interface = MockInterface()
 
         # Raw dict as PDM would provide — no tool table at all
         raw_data: dict[str, Any] = {'project': {'name': 'some-other-project', 'version': '1.0.0'}}
 
         with caplog.at_level(logging.DEBUG):
-            project = Project(project_configuration, interface, raw_data)
+            project = Project(project_configuration, raw_data)
 
         # Absolutely no log output for projects without CPPython configuration
         assert len(caplog.records) == 0
@@ -86,12 +83,11 @@ class TestProject:
             pass
 
         project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
-        interface = MockInterface()
 
         pyproject = PyProject(project=pep621)
 
         with caplog.at_level(logging.WARNING):
-            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+            project = Project(project_configuration, pyproject.model_dump(by_alias=True))
 
         # We don't want to have the log of the calling tool polluted with any default logging
         assert len(caplog.records) == 0
@@ -112,13 +108,12 @@ class TestProject:
             pass
 
         project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
-        interface = MockInterface()
 
         tool_data = ToolData()
         pyproject = PyProject(project=pep621, tool=tool_data)
 
         with caplog.at_level(logging.WARNING):
-            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+            project = Project(project_configuration, pyproject.model_dump(by_alias=True))
 
         # We don't want to have the log of the calling tool polluted with any default logging
         assert len(caplog.records) == 0
@@ -148,14 +143,13 @@ class TestProject:
             pass
 
         project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
-        interface = MockInterface()
 
         cppython_config = CPPythonLocalConfiguration()
         tool_data = ToolData(cppython=cppython_config)
         pyproject = PyProject(project=pep621, tool=tool_data)
 
         with caplog.at_level(logging.WARNING):
-            project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+            project = Project(project_configuration, pyproject.model_dump(by_alias=True))
 
         # We don't want to have the log of the calling tool polluted with any default logging
         assert len(caplog.records) == 0
@@ -188,13 +182,12 @@ class TestPrepareBuild:
             pass
 
         project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
-        interface = MockInterface()
 
         cppython_config = CPPythonLocalConfiguration()
         tool_data = ToolData(cppython=cppython_config)
         pyproject = PyProject(project=pep621, tool=tool_data)
 
-        return Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+        return Project(project_configuration, pyproject.model_dump(by_alias=True))
 
     def test_prepare_build_calls_sync_and_verify(self, tmp_path: Path, mocker: MockerFixture) -> None:
         """prepare_build() should call sync and verify_installed, not install.
@@ -228,10 +221,9 @@ class TestPrepareBuild:
             pass
 
         project_configuration = ProjectConfiguration(project_root=file_path.parent, version=None)
-        interface = MockInterface()
 
         pyproject = PyProject(project=pep621)
-        project = Project(project_configuration, interface, pyproject.model_dump(by_alias=True))
+        project = Project(project_configuration, pyproject.model_dump(by_alias=True))
 
         assert not project.enabled
         assert project.prepare_build() is None

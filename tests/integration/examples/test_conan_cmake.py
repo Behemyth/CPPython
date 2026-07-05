@@ -15,7 +15,6 @@ import pytest
 from typer.testing import CliRunner
 
 from cppython.build import build_wheel
-from cppython.console.schema import ConsoleInterface
 from cppython.core.schema import ProjectConfiguration
 from cppython.project import Project
 
@@ -39,7 +38,6 @@ class TestConanCMake:
         """Create a project instance with common configuration."""
         project_root = Path.cwd()
         config = ProjectConfiguration(project_root=project_root, version=None, verbosity=2, debug=True)
-        interface = ConsoleInterface()
 
         pyproject_path = project_root / 'pyproject.toml'
         pyproject_data = loads(pyproject_path.read_text(encoding='utf-8'))
@@ -48,7 +46,7 @@ class TestConanCMake:
             TestConanCMake._ensure_conan_config(pyproject_data)
             pyproject_data['tool']['cppython']['providers']['conan']['skip_upload'] = True
 
-        return Project(config, interface, pyproject_data)
+        return Project(config, pyproject_data)
 
     @staticmethod
     def _run_cmake_configure(cmake_binary: str) -> None:

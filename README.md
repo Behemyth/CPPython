@@ -7,12 +7,17 @@ A transparent Python management solution for C++ dependencies and building.
 
 ## Goals
 
-1. **CLI** — Provide imperative commands (`build`, `test`, `bench`, `run`, `install`) for managing C++ projects within a Python ecosystem.
-2. **Plugin Architecture** — Support pluggable generators (CMake, Meson) and providers (Conan, vcpkg) so users can mix and match toolchains.
-3. **PEP 517 Build Backend** — Act as a transparent build backend that delegates to scikit-build-core or meson-python after ensuring C++ dependencies are in place.
-4. **Package Manager Integration** — Integrate with Python package managers so that `<manager> install` seamlessly handles C++ dependency installation alongside Python dependencies.
+1. **CLI**: Provide imperative commands (`build`, `test`, `bench`, `run`, `install`) for managing C++ projects within a Python ecosystem.
+2. **Plugin Architecture**: Support pluggable generators (CMake, Meson) and providers (Conan, vcpkg) so users can mix and match toolchains.
+3. **PEP 517 Build Backend**: Act as a transparent build backend that delegates to scikit-build-core or meson-python after ensuring C++ dependencies are in place.
+4. **Build System Consumer**: Be declared directly in `[build-system].requires`, like scikit-build-core, so `pip wheel` and `pdm install` transparently install C++ dependencies alongside Python ones. No host-tool plugin is required.
 
 ## Features
+
+- Resolve and install C++ dependencies through pluggable providers (Conan, vcpkg).
+- Generate and sync build-tool configuration (CMake presets, Meson native files) from a single `[tool.cppython]` table.
+- Detect project versions from source control through pluggable SCM plugins (Git).
+- Inspect plugin configuration and discovered build targets with `cppython info` and `cppython list`.
 
 ## Setup
 
@@ -28,8 +33,10 @@ For contribution guidelines, see [CONTRIBUTING.md](https://github.com/synodic/.g
 
 ## Documentation
 
+Full documentation, including the build backend reference and plugin guides, is available at [synodic.github.io/cppython](https://synodic.github.io/cppython).
+
 ## License
 
-This project is licensed under the MIT License — see [LICENSE.md](LICENSE.md) for details.
+This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
 
 Copyright © 2026 Synodic Software

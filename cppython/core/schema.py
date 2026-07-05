@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import Annotated, Any, NewType, Protocol, Self, runtime_checkable
+from typing import Annotated, Any, NewType, Protocol, Self
 
 from packaging.requirements import Requirement
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -394,29 +394,3 @@ class CoreData(CPPythonModel):
 
     project_data: ProjectData
     cppython_data: CPPythonData
-
-
-@runtime_checkable
-class Interface(Protocol):
-    """Type for interfaces to allow feedback from CPPython"""
-
-    @abstractmethod
-    def write_pyproject(self) -> None:
-        """Called when CPPython requires the interface to write out pyproject.toml changes"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def write_configuration(self) -> None:
-        """Called when CPPython requires the interface to write out configuration changes
-
-        This writes to the primary configuration source (pyproject.toml or cppython.toml)
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def write_user_configuration(self) -> None:
-        """Called when CPPython requires the interface to write out global configuration changes
-
-        This writes to ~/.cppython/config.toml for global user configuration
-        """
-        raise NotImplementedError

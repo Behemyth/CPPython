@@ -16,6 +16,7 @@ build-backend = "cppython.build"
 |-------|-------------|
 | `conan` | Conan package manager support |
 | `cmake` | CMake generator support |
+| `meson` | Meson generator support |
 | `git` | Git SCM for dynamic versioning |
 
 ## CPPython Options

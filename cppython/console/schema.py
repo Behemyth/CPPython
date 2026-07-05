@@ -2,11 +2,7 @@
 
 from pydantic import ConfigDict
 
-from cppython.core.interface import NoOpInterface
-from cppython.core.schema import CPPythonModel, Interface, ProjectConfiguration
-
-ConsoleInterface = NoOpInterface
-"""Interface implementation for the console application (no-op write-backs)."""
+from cppython.core.schema import CPPythonModel, ProjectConfiguration
 
 
 class ConsoleConfiguration(CPPythonModel):
@@ -15,4 +11,3 @@ class ConsoleConfiguration(CPPythonModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     project_configuration: ProjectConfiguration
-    interface: Interface

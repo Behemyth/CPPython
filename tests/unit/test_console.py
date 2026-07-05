@@ -1,5 +1,7 @@
 """Tests the typer interface type"""
 
+from pathlib import Path
+
 import pytest
 import typer
 from typer.testing import CliRunner
@@ -13,10 +15,10 @@ class TestConsole:
     """Various that all the examples are accessible to cppython. The project should be mocked so nothing executes"""
 
     @staticmethod
-    def test_entrypoint() -> None:
+    def test_entrypoint(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Verifies that the entry functions with CPPython hooks"""
-        with runner.isolated_filesystem():
-            runner.invoke(app, [])
+        monkeypatch.chdir(tmp_path)
+        runner.invoke(app, [])
 
 
 class TestParseGroupsArgument:

@@ -12,7 +12,6 @@ from tomllib import loads
 import pytest
 from typer.testing import CliRunner
 
-from cppython.console.schema import ConsoleInterface
 from cppython.core.schema import ProjectConfiguration
 from cppython.project import Project
 
@@ -28,7 +27,6 @@ class TestVcpkgCMake:
         """Create a project instance with common configuration."""
         project_root = Path.cwd()
         config = ProjectConfiguration(project_root=project_root, version=None, verbosity=2, debug=True)
-        interface = ConsoleInterface()
 
         pyproject_path = project_root / 'pyproject.toml'
         pyproject_data = loads(pyproject_path.read_text(encoding='utf-8'))
@@ -37,7 +35,7 @@ class TestVcpkgCMake:
             TestVcpkgCMake._ensure_vcpkg_config(pyproject_data)
             pyproject_data['tool']['cppython']['providers']['vcpkg']['skip_upload'] = True
 
-        return Project(config, interface, pyproject_data)
+        return Project(config, pyproject_data)
 
     @staticmethod
     def _ensure_vcpkg_config(pyproject_data: dict) -> None:

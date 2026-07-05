@@ -12,33 +12,21 @@ dynamic = ["version"]
 requires-python = ">=3.14"
 
 dependencies = [
-    "typer>=0.24.0",
-    "pydantic>=2.12.5",
-    "packaging>=26.0",
-    "requests>=2.32.5",
-    "types-requests>=2.32.4.20260107",
-    "scikit-build-core>=0.11.6",
-    "meson-python>=0.19.0",
+    "typer>=0.26.8",
+    "pydantic>=2.13.4",
+    "packaging>=26.2",
+    "requests>=2.34.2",
+    "types-requests>=2.33.0.20260518",
+    "scikit-build-core>=0.12.2",
+    "meson-python>=0.20.0",
 ]
 
 [project.optional-dependencies]
-pytest = [
-    "pytest>=9.0.2",
-    "pytest-mock>=3.15.1",
-]
-git = [
-    "dulwich>=1.1.0",
-]
-pdm = [
-    "pdm>=2.26.6",
-]
-cmake = [
-    "cmake>=4.2.1",
-]
-meson = ["meson>=1.10.1"]
-conan = [
-    "conan>=2.25.2",
-]
+pytest = ["pytest>=9.1.1", "pytest-mock>=3.15.1"]
+git = ["dulwich>=1.2.8"]
+cmake = ["cmake>=4.3.4"]
+meson = ["meson>=1.11.1"]
+conan = ["conan>=2.30.0"]
 
 [project.urls]
 homepage = "https://github.com/Synodic-Software/CPPython"
@@ -55,26 +43,18 @@ meson = "cppython.plugins.meson.plugin:MesonGenerator"
 conan = "cppython.plugins.conan.plugin:ConanProvider"
 vcpkg = "cppython.plugins.vcpkg.plugin:VcpkgProvider"
 
-[project.entry-points.pdm]
-cppython = "cppython.plugins.pdm.plugin:CPPythonPlugin"
-
 [project.entry-points.pytest11]
 cppython = "cppython.test.pytest.fixtures"
 
 [dependency-groups]
-lint = [
-    "ruff>=0.15.1",
-    "pyrefly>=0.53.0",
-]
+lint = ["ruff>=0.15.20", "pyrefly>=1.1.1"]
 test = [
-    "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "nanobind>=2.11.0",
+    "nanobind>=2.13.0",
 ]
-docs = [
-    "zensical>=0.0.23",
-]
+docs = ["zensical>=0.0.23"]
 
 [project.scripts]
 cppython = "cppython.console.entry:app"
@@ -117,9 +97,6 @@ skip_empty = true
 
 [tool.pyrefly]
 project-excludes = ["examples"]
-
-[tool.pdm]
-plugins = ["-e file:///${PROJECT_ROOT}"]
 
 [tool.pdm.version]
 source = "scm"

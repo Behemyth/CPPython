@@ -7,7 +7,7 @@ from typing import Any
 from cppython.builder import Builder
 from cppython.core.exception import ConfigException
 from cppython.core.resolution import resolve_model
-from cppython.core.schema import Interface, ProjectConfiguration, PyProject, SyncData
+from cppython.core.schema import ProjectConfiguration, PyProject, SyncData
 from cppython.schema import API
 from cppython.utility.output import NULL_SESSION, SessionProtocol
 
@@ -18,7 +18,6 @@ class Project(API):
     def __init__(
         self,
         project_configuration: ProjectConfiguration,
-        interface: Interface,
         pyproject_data: dict[str, Any],
         *,
         session: SessionProtocol | None = None,
@@ -27,12 +26,10 @@ class Project(API):
 
         Args:
             project_configuration: Project-wide configuration
-            interface: Interface for callbacks to write configuration changes
             pyproject_data: Merged configuration data from all sources
             session: Output session for spinner / log file management (defaults to no-op)
         """
         self._enabled = False
-        self._interface = interface
         self._session: SessionProtocol = session or NULL_SESSION
         self.logger = logging.getLogger('cppython')
 

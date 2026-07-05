@@ -59,6 +59,7 @@ Available extras:
 
 - `conan` - Conan package manager support
 - `cmake` - CMake build system
+- `meson` - Meson build system
 - `git` - Git SCM support for version detection
 
 ### CPPython Configuration

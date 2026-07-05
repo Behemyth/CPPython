@@ -13,7 +13,6 @@ from typing import Any
 
 from rich.console import Console
 
-from cppython.core.interface import NoOpInterface
 from cppython.core.schema import ProjectConfiguration, SyncData
 from cppython.project import Project
 from cppython.utility.exception import InstallationVerificationError
@@ -30,10 +29,6 @@ class BuildPreparationResult:
     """
 
     sync_data: SyncData | None = None
-
-
-BuildInterface = NoOpInterface
-"""Interface implementation for the build backend (no-op write-backs)."""
 
 
 class BuildPreparation:
@@ -68,14 +63,15 @@ class BuildPreparation:
         """Run CPPython preparation and return the build preparation result.
 
         Syncs provider config and verifies that C++ dependencies have been
-        installed by a prior ``install()`` call. Does **not** install
-        dependencies itself — the build backend is not responsible for that.
+        installed. If artifacts are missing, installs them automatically so
+        that a plain ``pip wheel .`` / ``pdm install`` works from a clean
+        clone without a separate ``cppython install`` step.
 
         Returns:
             BuildPreparationResult containing sync data for the active generator
 
         Raises:
-            InstallationVerificationError: If provider artifacts are missing
+            InstallationVerificationError: If provider artifacts are still missing after install
         """
         self.logger.info('CPPython: Preparing build environment')
 
@@ -97,23 +93,20 @@ class BuildPreparation:
 
         with OutputSession(console, verbose=False) as session:
             # Create the CPPython project
-            interface = BuildInterface()
-            project = Project(project_config, interface, pyproject_data, session=session)
+            project = Project(project_config, pyproject_data, session=session)
 
             if not project.enabled:
                 self.logger.info('CPPython: Project not enabled, skipping preparation')
                 return BuildPreparationResult()
 
-            # Sync and verify — does NOT install dependencies
             self.logger.info('CPPython: Verifying C++ dependencies are installed')
 
             try:
                 sync_data = project.prepare_build()
             except InstallationVerificationError:
-                self.logger.error(
-                    "CPPython: C++ dependencies not installed. Run 'cppython install' or 'pdm install' before building."
-                )
-                raise
+                self.logger.info('CPPython: C++ dependencies missing, installing automatically')
+                project.install()
+                sync_data = project.prepare_build()
 
             if sync_data:
                 self.logger.info('CPPython: Sync data obtained from provider: %s', type(sync_data).__name__)

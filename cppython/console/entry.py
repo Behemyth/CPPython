@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 from cppython.configuration import ConfigurationLoader
-from cppython.console.schema import ConsoleConfiguration, ConsoleInterface
+from cppython.console.schema import ConsoleConfiguration
 from cppython.core.schema import PluginReport, ProjectConfiguration
 from cppython.project import Project
 from cppython.utility.output import OutputSession
@@ -49,7 +49,7 @@ def get_enabled_project(context: typer.Context) -> Project:
     loader = ConfigurationLoader(configuration.project_configuration.project_root)
     pyproject_data = loader.get_project_data()
 
-    project = Project(configuration.project_configuration, configuration.interface, pyproject_data)
+    project = Project(configuration.project_configuration, pyproject_data)
     if not project.enabled:
         print('[bold red]Error[/bold red]: Project is not enabled. Please check your configuration files.')
         print('Configuration files checked:')
@@ -160,8 +160,7 @@ def main(
 
     project_configuration = ProjectConfiguration(verbosity=verbose, debug=debug, project_root=path, version=None)
 
-    interface = ConsoleInterface()
-    context.obj = ConsoleConfiguration(project_configuration=project_configuration, interface=interface)
+    context.obj = ConsoleConfiguration(project_configuration=project_configuration)
 
 
 def _print_plugin_report(role: str, name: str, report: PluginReport) -> None:

@@ -2,7 +2,6 @@
 
 import os
 import shutil
-from collections.abc import Generator
 from pathlib import Path
 from typing import cast
 
@@ -46,8 +45,8 @@ def fixture_example_directory(
     name='example_runner',
 )
 def fixture_example_runner(
-    request: pytest.FixtureRequest, typer_runner: CliRunner, tmp_path: Path
-) -> Generator[CliRunner]:
+    request: pytest.FixtureRequest, typer_runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> CliRunner:
     """Sets up an isolated filesystem for an example test."""
     # Get the root directory of the project
     root_directory = Path(__file__).parent.parent.parent.absolute()
@@ -61,8 +60,10 @@ def fixture_example_runner(
     # Generate the example path from the pytest file and test name
     example_path = root_directory / 'examples' / file_name / test_name
 
-    with typer_runner.isolated_filesystem(temp_dir=tmp_path):
-        # Copy the example directory to the temporary directory
-        shutil.copytree(example_path, Path(), dirs_exist_ok=True)
+    # typer's CliRunner no longer provides isolated_filesystem(); chdir into a temp dir instead
+    monkeypatch.chdir(tmp_path)
 
-        yield typer_runner
+    # Copy the example directory to the temporary directory
+    shutil.copytree(example_path, Path(), dirs_exist_ok=True)
+
+    return typer_runner
